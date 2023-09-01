@@ -1,0 +1,39 @@
+version: '3'
+services:
+  fastapi:
+    build:
+      context: ./app
+      dockerfile: Dockerfile-app
+    ports:
+      - "8000:80"
+    depends_on:
+      - mysql-db
+    environment:
+      - MYSQL_HOST=mysql-db
+      - MYSQL_USER=root
+      - MYSQL_PASSWORD=password
+      - MYSQL_DATABASE=myDB
+    volumes:
+      - ./app:/app
+    networks:
+      - my-network
+
+  mysql-db:
+    build:
+      context: ./mysql-db
+      dockerfile: Dockerfile-mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=password
+      - MYSQL_DATABASE=myDB
+    volumes:
+      - mysql-data:/var/lib/mysql
+      - mysql-logs:/var/log/mysql
+    networks:
+      - my-network
+
+networks:
+  my-network:
+
+volumes:
+  mysql-data:
+  mysql-logs:
