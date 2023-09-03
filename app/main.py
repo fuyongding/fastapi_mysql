@@ -47,6 +47,10 @@ async def create_task(task: Task):
         cursor.execute(query, values)
         db.commit()
         return task
+ 
+@app.get("/")
+async def root_route():
+    return {"root": "route"}
 
 # GET all
 @app.get("/tasks/", response_model=list[Task])

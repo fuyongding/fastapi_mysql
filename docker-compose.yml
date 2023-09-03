@@ -1,7 +1,7 @@
 version: '3'
 services:
   mysql-db:
-    container_name: mysql-db
+    container_name: mysql
     build:
       context: ./mysql-db
       dockerfile: Dockerfile-mysql
