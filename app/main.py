@@ -10,9 +10,10 @@ app = FastAPI()
 # Database configuration
 db = pymysql.connect(
     host="mysql-db",
+    port=3306,
     user="root",
-    password= os.environ.get("MYSQL_ROOT_PASSWORD"),
-    database= os.environ.get("MYSQL_DATABASE"),
+    password="password",
+    database="myDB",
     cursorclass=pymysql.cursors.DictCursor
 )
 

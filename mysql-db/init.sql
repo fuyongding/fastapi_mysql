@@ -1,5 +1,5 @@
-CREATE DATABASE IF NOT EXISTS mydb;
-USE mydb;
+CREATE DATABASE IF NOT EXISTS myDB;
+USE myDB;
 
 -- Create the 'tasks' table
 create table tasks (
