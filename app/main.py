@@ -7,6 +7,11 @@ import pymysql
 
 app = FastAPI()
 
+# FastAPI code structure
+
+# health check
+# check if database/tables are present
+
 # connect to db and return current state of db
 def getDB():
     # Database configuration
@@ -21,6 +26,7 @@ def getDB():
     return db
 
 # Data model
+# input/output validation
 class Task(BaseModel):
     name: str
     description: str
