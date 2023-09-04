@@ -5,6 +5,8 @@ services:
     build:
       context: ./mysql-db
       dockerfile: Dockerfile-mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
     volumes:
       - mysql-data:/var/lib/mysql
       - mysql-logs:/var/log/mysql
