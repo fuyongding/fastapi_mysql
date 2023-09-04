@@ -1,5 +1,9 @@
-CREATE DATABASE IF NOT EXISTS task123;
-USE task123;
+-- script that is executed only when the mysql container is first created
+-- to make this script get executed again, run docker-compose down -v to remove the volume for the container
+-- then run docker-compose up --build 
+
+CREATE DATABASE IF NOT EXISTS task_db;
+USE task_db;
 
 -- Create the 'tasks' table
 create table tasks (

@@ -8,15 +8,17 @@ services:
     volumes:
       - mysql-data:/var/lib/mysql
       - mysql-logs:/var/log/mysql
+      - ./mysql-db/init.sql:/docker-entrypoint-initdb.d/init.sql  # Map the init.sql file to the container's initdb.d directory
     ports:
       - "3306:3306"
-    env_file:
-      - ./mysql-db/local.env
+    networks:
+      - backend
 
   fastapi:
+    container_name: fastapi
     build:
       context: ./app
-      dockerfile: Dockerfile-app
+      dockerfile: Dockerfile-app  
     ports:
       - "8000:80"
     depends_on:
@@ -25,10 +27,12 @@ services:
       - ./app:/app
     env_file:
       - ./app/local.env
+    networks:
+      - backend
 
 volumes:
   mysql-data:
   mysql-logs:
  
-# networks:
-#   my-network:
+networks:
+  backend:

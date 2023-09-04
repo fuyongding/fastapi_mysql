@@ -1,12 +1,5 @@
 # Use official MySQL image
 FROM mysql:latest
 
-# Set environment variables for MySQL container
-# ENV DATABASE_PASSWORD=password
-# ENV DATABASE=myDB
-
 # Expose MySQL port
 EXPOSE 3306
-
-# Copy custom initialization script
-COPY init.sql /docker-entrypoint-initdb.d/

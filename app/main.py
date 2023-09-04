@@ -7,15 +7,18 @@ import pymysql
 
 app = FastAPI()
 
-# Database configuration
-db = pymysql.connect(
-    host="mysql-db",
-    port=3306,
-    user="root",
-    password="password",
-    database="myDB",
-    cursorclass=pymysql.cursors.DictCursor
-)
+# connect to db and return current state of db
+def getDB():
+    # Database configuration
+    db = pymysql.connect(
+        host=os.environ.get("DATABASE_HOST"),
+        port=int(os.environ.get("DATABASE_PORT")),
+        user=os.environ.get("DATABASE_USERNAME"),
+        password=os.environ.get("DATABASE_PASSWORD"),
+        database=os.environ.get("DATABASE"),
+        cursorclass=pymysql.cursors.DictCursor
+    )
+    return db
 
 # Data model
 class Task(BaseModel):
@@ -33,6 +36,7 @@ class ResponseMessage(BaseModel):
 @app.post("/tasks/", response_model=Task | ResponseMessage)
 async def create_task(task: Task):
     # Check if a task with the same name already exists
+    db = getDB()
     with db.cursor() as cursor:
         query = "SELECT id FROM tasks WHERE name = %s"
         cursor.execute(query, (task.name))
@@ -48,13 +52,14 @@ async def create_task(task: Task):
         db.commit()
         return task
  
-@app.get("/")
-async def root_route():
-    return {"root": "route"}
+# @app.get("/")
+# async def root_route():
+#     return {"root": "route"}
 
 # GET all
 @app.get("/tasks/", response_model=list[Task])
 async def get_all_tasks():
+    db = getDB()
     with db.cursor() as cursor:
         query = "SELECT * FROM tasks"
         cursor.execute(query)
@@ -66,6 +71,7 @@ async def get_all_tasks():
 async def get_task_by_id(
     task_id: int = Path(description="id of the task to get")
 ):
+    db = getDB()
     with db.cursor() as cursor:
         query = "SELECT * FROM tasks WHERE id = %s"
         cursor.execute(query, (task_id))
@@ -77,8 +83,9 @@ async def get_task_by_id(
 # GET by name
 @app.get("/tasks/by_name/", response_model=Task)
 async def get_task_by_name(
-    name: str = Query(description="name of the task to get")
+    name: str = Query(description="Name of the task to get")
 ):
+    db = getDB()
     with db.cursor() as cursor:
         query = "SELECT * FROM tasks WHERE name = %s"
         cursor.execute(query, (name,))
@@ -94,10 +101,17 @@ async def update_task_by_id(
     task_id: int = Path(description="id of the task to update"), 
     updated_task: Task
 ):
+    db = getDB()
     update_values = []
     with db.cursor() as cursor:
-        query = "SELECT id FROM tasks WHERE name = %s"
-        cursor.execute(query, (updated_task.name))
+        query = "SELECT * FROM tasks WHERE id = %s"
+        cursor.execute(query, (task_id,))
+        find_task = cursor.fetchone()
+        if find_task is None:
+            raise HTTPException(status_code=404, detail="Task not found")
+
+        query = "SELECT id FROM tasks WHERE name = %s AND id != %s"
+        cursor.execute(query, (updated_task.name, task_id))
         existing_task = cursor.fetchone()
         if existing_task:
             return ResponseMessage(message="Task already exists with the same name")
@@ -131,14 +145,14 @@ async def update_task_by_id(
         cursor.execute(updated_query, (task_id))
         task = cursor.fetchone()
 
-        if task is None:
-            raise HTTPException(status_code=404, detail="Task not found")
-
         return task
 
 # DELETE by id
 @app.delete("/tasks/{task_id}", response_model=ResponseMessage)
-async def delete_task_by_id(task_id: int= Path(description="id of the task to delete")):
+async def delete_task_by_id(
+    task_id: int= Path(description="id of the task to delete")
+):
+    db = getDB()
     with db.cursor() as cursor:
         query = "SELECT * FROM tasks WHERE id = %s"
         cursor.execute(query, (task_id))
@@ -152,16 +166,18 @@ async def delete_task_by_id(task_id: int= Path(description="id of the task to de
         return ResponseMessage(message="Task deleted")
 
 # DELETE by name
-@app.delete("/tasks/by_name", response_model=ResponseMessage)
-async def delete_task_by_name(name: str = Query(description="name of the task to get")):
-    with db.cursor() as cursor:
-        query = "SELECT * FROM tasks WHERE name = %s"
-        cursor.execute(query, (name))
-        task = cursor.fetchone()
-        if task is None:
-            raise HTTPException(status_code=404, detail="Task not found")
+# @app.delete("/tasks/delete_by_name", response_model=Task)
+# async def delete_task_by_name(
+#     name: str = Query(description="Name of the task to delete")
+# ):
+#     with db.cursor() as cursor:
+#         query = "SELECT * FROM tasks WHERE name = %s"
+#         cursor.execute(query, (name,))
+#         task = cursor.fetchone()
+#         if task is None:
+#             raise HTTPException(status_code=404, detail="Task not found")
 
-        query = "DELETE FROM tasks WHERE name = %s"
-        cursor.execute(query, (name))
-        db.commit()
-        return ResponseMessage(message="Task deleted")
+#         query = "DELETE FROM tasks WHERE name = %s"
+#         cursor.execute(query, (name,))
+#         db.commit()
+#         return task
