@@ -5,6 +5,7 @@ WORKDIR /app
 # Copy the current directory contents into the container at /app
 COPY . /app
 
+# set VIRTUAL_ENV variable
 ENV VIRTUAL_ENV=/opt/venv
 RUN python3 -m venv $VIRTUAL_ENV
 
@@ -18,34 +19,20 @@ RUN pip install -r requirements.txt
 CMD uvicorn main:app --host 0.0.0.0 --port 80
 
 
-# Using venv
+# Using venv (not that clean, running the binaries)
 # FROM python:3.10.12
-
 # WORKDIR /app
-# # Copy the current directory contents into the container at /app
 # COPY . /app
-
 # RUN python3 -m venv /opt/venv
 # RUN . /opt/venv/bin/activate && pip install -r requirements.txt
 # CMD . /opt/venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 80
 
 
 
+# Running without venv
 # FROM python:3.10.12
-
 # WORKDIR /app
-
-# # Copy the current directory contents into the container at /app
 # COPY . /app
-
-# # Install required Python packages
 # RUN pip install -r requirements.txt
-
-# # Make port 80 available to the world outside this container
-# EXPOSE 80
-
-# # Define environment variables
 # ENV MODULE_NAME=main
-
-# # Run the FastAPI app when the container launches
 # CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]

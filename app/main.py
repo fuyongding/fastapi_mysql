@@ -7,11 +7,6 @@ import pymysql
 
 app = FastAPI()
 
-# FastAPI code structure
-
-# health check
-# check if database/tables are present
-
 # connect to db and return current state of db
 def getDB():
     # Database configuration
@@ -25,8 +20,7 @@ def getDB():
     )
     return db
 
-# Data model
-# input/output validation
+# Data models
 class Task(BaseModel):
     name: str
     description: str
@@ -34,11 +28,9 @@ class Task(BaseModel):
     startdate: date | None = None
     enddate: date | None = None
 
-# response message object
 class ResponseMessage(BaseModel):
     message: str
 
-# POST
 @app.post("/tasks/", response_model=Task | ResponseMessage)
 async def create_task(task: Task):
     # Check if a task with the same name already exists
@@ -57,12 +49,7 @@ async def create_task(task: Task):
         cursor.execute(query, values)
         db.commit()
         return task
- 
-# @app.get("/")
-# async def root_route():
-#     return {"root": "route"}
 
-# GET all
 @app.get("/tasks/", response_model=list[Task])
 async def get_all_tasks():
     db = getDB()
@@ -72,7 +59,6 @@ async def get_all_tasks():
         all_tasks = cursor.fetchall()
         return all_tasks
 
-# GET by id
 @app.get("/tasks/{task_id}", response_model=Task)
 async def get_task_by_id(
     task_id: int = Path(description="id of the task to get")
@@ -86,7 +72,6 @@ async def get_task_by_id(
             raise HTTPException(status_code=404, detail="Task not found")
         return task
 
-# GET by name
 @app.get("/tasks/by_name/", response_model=Task)
 async def get_task_by_name(
     name: str = Query(description="Name of the task to get")
@@ -99,8 +84,7 @@ async def get_task_by_name(
         if task is None:
             raise HTTPException(status_code=404, detail="Task not found")
         return task
-
-# UPDATE by id     
+ 
 @app.put("/tasks/{task_id}", response_model=Task | ResponseMessage)
 async def update_task_by_id(
     *, 
@@ -153,7 +137,6 @@ async def update_task_by_id(
 
         return task
 
-# DELETE by id
 @app.delete("/tasks/{task_id}", response_model=ResponseMessage)
 async def delete_task_by_id(
     task_id: int= Path(description="id of the task to delete")
@@ -170,20 +153,3 @@ async def delete_task_by_id(
         cursor.execute(query, (task_id))
         db.commit()
         return ResponseMessage(message="Task deleted")
-
-# DELETE by name
-# @app.delete("/tasks/delete_by_name", response_model=Task)
-# async def delete_task_by_name(
-#     name: str = Query(description="Name of the task to delete")
-# ):
-#     with db.cursor() as cursor:
-#         query = "SELECT * FROM tasks WHERE name = %s"
-#         cursor.execute(query, (name,))
-#         task = cursor.fetchone()
-#         if task is None:
-#             raise HTTPException(status_code=404, detail="Task not found")
-
-#         query = "DELETE FROM tasks WHERE name = %s"
-#         cursor.execute(query, (name,))
-#         db.commit()
-#         return task
