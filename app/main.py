@@ -1,33 +1,17 @@
 import os
 from fastapi import FastAPI, Path, Query, HTTPException, Depends
 from sqlalchemy.orm import Session
-from sqlalchemy import inspect
-from crud import get_all_tasks
-from database import get_db, engine
-from models import Task, ResponseMessage, Base
+import crud, database, models, schemas
 
 app = FastAPI()
 
-@app.get("/tasks", response_model=None)
-async def get_tasks(db: Session = Depends(get_db)):
-    tasks = get_all_tasks(db)
+@app.post("/tasks", response_model=schemas.Task)
+def create_task(task: schemas.TaskCreate, db: Session = Depends(database.get_db)):
+    return crud.create_task(db, task)
 
-# @app.post("/tasks/", response_model=Task | ResponseMessage)
-# async def create_task(task: Task):
-#     db = get_DB()
-#     with db.cursor() as cursor:
-#         query = "SELECT id FROM tasks WHERE name = %s"
-#         cursor.execute(query, (task.name))
-#         existing_task = cursor.fetchone()
-        
-#         if existing_task:
-#             return ResponseMessage(message="Task already exists with the same name")
-
-#         query = "INSERT INTO tasks (name, description, completed, startdate, enddate) VALUES (%s, %s, %s, %s, %s)"
-#         values = (task.name, task.description, task.completed, task.startdate, task.enddate)
-#         cursor.execute(query, values)
-#         db.commit()
-#         return task
+@app.get("/tasks", response_model=list[schemas.Task])
+def get_tasks(db: Session = Depends(database.get_db)):
+    return crud.get_all_tasks(db)
 
 # @app.get("/tasks/{task_id}", response_model=Task)
 # async def get_task_by_id(
