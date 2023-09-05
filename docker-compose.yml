@@ -1,5 +1,22 @@
 version: '3'
 services:
+  fastapi:
+    container_name: fastapi
+    build:
+      context: ./app
+      dockerfile: Dockerfile-app  
+    ports:
+      - "8000:80"
+    depends_on:
+      mysql-db:
+        condition: service_healthy
+    volumes:
+      - ./app:/app
+    env_file:
+      - ./app/local.env
+    networks:
+      - backend
+
   mysql-db:
     container_name: mysql
     build:
@@ -11,24 +28,12 @@ services:
       - mysql-data:/var/lib/mysql
       - mysql-logs:/var/log/mysql
       - ./mysql-db/init.sql:/docker-entrypoint-initdb.d/init.sql  # Map the init.sql file to the container's initdb.d directory
+    healthcheck:
+            test: ["CMD", "mysqladmin" ,"ping", "-h", "localhost"]
+            timeout: 20s
+            retries: 10
     ports:
       - "3306:3306"
-    networks:
-      - backend
-
-  fastapi:
-    container_name: fastapi
-    build:
-      context: ./app
-      dockerfile: Dockerfile-app  
-    ports:
-      - "8000:80"
-    depends_on:
-      - mysql-db
-    volumes:
-      - ./app:/app
-    env_file:
-      - ./app/local.env
     networks:
       - backend
 
