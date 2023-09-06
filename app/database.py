@@ -6,7 +6,7 @@ import models
 DATABASE_URL = "mysql+pymysql://root:password@mysql-db/task_db" 
 engine = create_engine(DATABASE_URL)
 
-# Create the tables based on the models
+# Create the tables based on the models 
 models.Base.metadata.create_all(bind=engine)
 
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
