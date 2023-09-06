@@ -1,4 +1,3 @@
-import os
 from fastapi import FastAPI, Path, Query, HTTPException, Depends
 from sqlalchemy.orm import Session
 import crud, database, models, schemas # this executes all the code in these files that are not functions,variables,....
@@ -17,16 +16,23 @@ def create_person(person: schemas.PersonCreate, db: Session = Depends(database.g
 def get_all_persons(db: Session = Depends(database.get_db)):
     return crud.get_all_persons(db)
 
-@app.get("/persons/{id}", response_model=schemas.Person)
-def get_person_by_id(*, db: Session = Depends(database.get_db), person_id: int):
+@app.get("/persons/{person_id}", response_model=schemas.Person)
+def get_person_by_id(
+    *, 
+    db: Session = Depends(database.get_db), 
+    person_id: int
+):
     db_person = crud.get_person_by_id(db, person_id)
     if not db_person:
         raise HTTPException(status_code=404, detail="Person with this id does not exist")
     return db_person
 
-@app.put("/persons/{id}", response_model=schemas.Person)
+@app.put("/persons/{person_id}", response_model=schemas.Person)
 def update_person(
-    person_id: int, person_update: schemas.PersonBase, db: Session = Depends(database.get_db)
+    *,
+    person_id: int = Path(description="id of the person to get"), 
+    person_update: schemas.PersonBase, 
+    db: Session = Depends(database.get_db)
 ):
     updated_person = crud.update_person(db, person_id, person_update)
     if updated_person is None:
@@ -35,7 +41,12 @@ def update_person(
 
 # task endpoints
 @app.post("/tasks", response_model=schemas.Task)
-def create_task(*, task: schemas.TaskCreate, db: Session = Depends(database.get_db), person_id: int):
+def create_task(
+    *, 
+    task: schemas.TaskCreate, 
+    db: Session = Depends(database.get_db), 
+    person_id: int = Path(description="id of the person to update")
+):
     db_person = crud.get_person_by_id(db, person_id)
     if not db_person:
         raise HTTPException(status_code=404, detail="Person with this id does not exist")
@@ -45,64 +56,28 @@ def create_task(*, task: schemas.TaskCreate, db: Session = Depends(database.get_
 def get_all_tasks(db: Session = Depends(database.get_db)):
     return crud.get_all_tasks(db)
 
-@app.get("/tasks/{id}", response_model=schemas.Task)
-def get_task_by_id(*, db: Session = Depends(database.get_db), task_id: int):
+@app.get("/tasks/{task_id}", response_model=schemas.Task)
+def get_task_by_id(
+    *,
+    task_id: int = Path(description="id of the task to get"), 
+    db: Session = Depends(database.get_db)
+):
     db_task = crud.get_task_by_id(db, task_id)
     if not db_task:
         raise HTTPException(status_code=400, detail="Task with this id does not exist") # bad request
     return db_task
- 
-# @app.put("/tasks/{task_id}", response_model=Task | ResponseMessage)
-# async def update_task_by_id(
-#     *, 
-#     task_id: int = Path(description="id of the task to update"), 
-#     updated_task: Task
-# ):
-#     db = get_DB()
-#     update_values = []
-#     with db.cursor() as cursor:
-#         query = "SELECT * FROM tasks WHERE id = %s"
-#         cursor.execute(query, (task_id,))
-#         find_task = cursor.fetchone()
-#         if find_task is None:
-#             raise HTTPException(status_code=404, detail="Task not found")
-
-#         query = "SELECT id FROM tasks WHERE name = %s AND id != %s"
-#         cursor.execute(query, (updated_task.name, task_id))
-#         existing_task = cursor.fetchone()
-#         if existing_task:
-#             return ResponseMessage(message="Task already exists with the same name")
-
-#         query = "UPDATE tasks SET"
-#         if updated_task.name:
-#             query += " name = %s,"
-#             update_values.append(updated_task.name)
-#         if updated_task.description:
-#             query += " description = %s,"
-#             update_values.append(updated_task.description)
-#         if updated_task.completed is not None:
-#             query += " completed = %s,"
-#             update_values.append(updated_task.completed)
-#         if updated_task.startdate:
-#             query += " startdate = %s,"
-#             update_values.append(updated_task.startdate)
-#         if updated_task.enddate:
-#             query += " enddate = %s,"
-#             update_values.append(updated_task.enddate)  
-
-#         # Remove the trailing comma and complete the query
-#         query = query.rstrip(",") + " WHERE id = %s"
-#         update_values.append(task_id)
-
-#         cursor.execute(query, update_values)
-#         db.commit()
-
-#         # Retrieve the updated task from the database
-#         updated_query = "SELECT * FROM tasks WHERE id = %s"
-#         cursor.execute(updated_query, (task_id))
-#         task = cursor.fetchone()
-
-#         return task
+   
+@app.put("/tasks/{task_id}", response_model=schemas.Task)
+def update_task(
+    *, 
+    task_id: int = Path(description="id of the task to update"), 
+    task_update: schemas.TaskBase, 
+    db: Session = Depends(database.get_db)
+):
+    updated_task = crud.update_task(db, task_id, task_update)
+    if updated_task is None:
+        raise HTTPException(status_code=404, detail="Task with this id does not exist")
+    return updated_task
 
 # @app.delete("/tasks/{task_id}", response_model=ResponseMessage)
 # async def delete_task_by_id(

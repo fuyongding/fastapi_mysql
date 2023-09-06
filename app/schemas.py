@@ -3,7 +3,7 @@ from datetime import date
 
 # Base: for updates
 # Create: for creates
-# __: for response
+# Task/Person: for response
 
 # (Update Input Model)
 class TaskBase(BaseModel):

@@ -9,7 +9,7 @@ services:
       - "8000:80"
     depends_on:
       mysql-db:
-        condition: service_healthy
+        condition: service_healthy # this ensures fastapi only starts after mysql-db is done starting up
     volumes:
       - ./app:/app
     env_file:
