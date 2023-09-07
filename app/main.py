@@ -5,11 +5,17 @@ Main module that provides the crud endpoints for the webservice
 # pylint: disable=trailing-whitespace
 from fastapi import FastAPI, Path, Query, HTTPException, Depends
 from sqlalchemy.orm import Session
-import crud
-import database
-import schemas
+from crud import crud
+from database import database
+from schema import schemas
 
 app = FastAPI()
+
+@app.get("/", response_model=dict)
+def root_route():
+    """root route for app
+    """
+    return {"hello":"world"}
 
 @app.post("/persons", response_model=schemas.Person)
 def create_person(person: schemas.PersonCreate, db: Session = Depends(database.get_db)):
@@ -62,7 +68,7 @@ def get_person_by_id(
 @app.put("/persons/{person_id}", response_model=schemas.Person)
 def update_person(
     *,
-    person_id: int = Path(description="id of the person to get"), 
+    person_id: int = Path(description="id of the person to update"), 
     person_update: schemas.PersonBase, 
     db: Session = Depends(database.get_db)
 ):

@@ -13,7 +13,7 @@ services:
     volumes:
       - ./app:/app
     env_file:
-      - ./app/local.env
+      - ./app/.env
     networks:
       - backend
 

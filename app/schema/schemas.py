@@ -4,7 +4,7 @@ Defined schemas
 # pylint: disable=too-few-public-methods
 # pylint: disable=unnecessary-pass
 from datetime import date
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class TaskBase(BaseModel):
     """Schema for task updates
@@ -25,11 +25,12 @@ class Task(TaskBase):
     """
     id: int
     assigned_person_id: int
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        """treat Person class as ORM model
-        """
-        orm_mode = True
+    # class Config:
+    #     """treat Person class as ORM model
+    #     """
+    #     orm_mode = True
 
 class PersonBase(BaseModel):
     """Schema for person updates
@@ -46,8 +47,9 @@ class Person(PersonBase):
     """
     id: int
     tasks: list[Task] = []
+    model_config = ConfigDict(from_attributes=True)
 
-    class Config:
-        """treat Person class as ORM model
-        """
-        orm_mode = True
+    # class Config:
+    #     """treat Person class as ORM model
+    #     """
+    #     orm_mode = True

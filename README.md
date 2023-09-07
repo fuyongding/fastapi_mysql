@@ -10,7 +10,7 @@
 **TODOS:**
 - Move sql.init logic to application side **(DONE)**
 - Use SQLachemy ORM **(DONE)**
-- use pylint
+- use pylint **(DONE)**
 - have proper code structure
 - use pytest for testing
 - SonarQube
