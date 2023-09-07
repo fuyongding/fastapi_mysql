@@ -3,7 +3,6 @@ Defined schemas
 """
 # pylint: disable=too-few-public-methods
 # pylint: disable=unnecessary-pass
-# pylint: disable=missing-class-docstring
 from datetime import date
 from pydantic import BaseModel
 
@@ -28,6 +27,8 @@ class Task(TaskBase):
     assigned_person_id: int
 
     class Config:
+        """treat Person class as ORM model
+        """
         orm_mode = True
 
 class PersonBase(BaseModel):
@@ -47,4 +48,6 @@ class Person(PersonBase):
     tasks: list[Task] = []
 
     class Config:
+        """treat Person class as ORM model
+        """
         orm_mode = True
