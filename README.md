@@ -9,7 +9,7 @@
 
 **TODOS:**
 - Move sql.init logic to application side **(DONE)**
-- Use SQLachemy ORM
+- Use SQLachemy ORM **(DONE)**
 - use pylint
 - have proper code structure
 - use pytest for testing
