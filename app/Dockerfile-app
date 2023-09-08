@@ -15,9 +15,8 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 # Install dependencies:
 RUN pip install -r requirements.txt
 
-# Run the application:
-CMD uvicorn main:app --host 0.0.0.0 --port 80
-
+# Entrypoint script
+CMD ["sh", "-c", "if [ \"$TESTING\" = \"true\" ]; then tail -f /dev/null; else uvicorn main:app --host 0.0.0.0 --port 80; fi"]
 
 # Using venv (not that clean, running the binaries)
 # FROM python:3.10.12
@@ -26,8 +25,6 @@ CMD uvicorn main:app --host 0.0.0.0 --port 80
 # RUN python3 -m venv /opt/venv
 # RUN . /opt/venv/bin/activate && pip install -r requirements.txt
 # CMD . /opt/venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 80
-
-
 
 # Running without venv
 # FROM python:3.10.12

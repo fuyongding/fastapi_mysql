@@ -1,58 +1,49 @@
 import pytest
 from fastapi.testclient import TestClient
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 from ..main import app
-from database import SessionLocal, engine
+from database import database
+from model import models
 from datetime import date
 
 client = TestClient(app)
 
+# Fixture to create and set up the database tables before the tests
+@pytest.fixture(scope="session", autouse=True)
+def setup_database():
+    models.Base.metadata.create_all(bind=database.engine)
+    yield
+    models.Base.metadata.drop_all(bind=database.engine)
+
+# Fixture to create a new database session for each test
 @pytest.fixture(scope="function")
 def db():
-    """
-    Fixture to create a new database session for each test
-    """
-    db = SessionLocal()
+    db = database.SessionLocal()
     try:
         yield db
     finally:
+        db.rollback()
         db.close()
 
-# Fixture to create and drop database tables
-@pytest.fixture(scope="module", autouse=True)
-def setup_and_teardown_database():
-    # Create tables
-    engine.execute("CREATE DATABASE IF NOT EXISTS test_database;")
-    engine.execute("USE test_database;")
-    from model import models
-    models.Base.metadata.create_all(bind=engine)
-
-    # Run tests
-    yield
-
-    # Drop tables
-    models.Base.metadata.drop_all(bind=engine)
-    engine.execute("DROP DATABASE IF EXISTS test_database;")
-
-# Person tests
-# Additional parameterized test cases for creating valid persons
-@pytest.mark.parametrize("person_data", [
-    ({"name": "John Doe"}),  # Valid name
-    ({"name": "Alice Smith"}),  # Valid name
+# PERSON TESTS
+@pytest.mark.parametrize("valid_name", [
+    "heibui", 
+    "Alice",
 ])
-def test_create_valid_person(db, person_data):
-    response_create = client.post("/persons", json=person_data)
-    assert response_create.status_code == 200  # Expecting a successful response
+def test_create_valid_person(db, valid_name):
+    response_create = client.post("/persons", json={"name": valid_name})
+    assert response_create.status_code == 200
     created_person = response_create.json()
-    assert created_person["name"] == person_data["name"]
+    assert created_person["name"] == valid_name
 
-# Parameterized test cases for creating persons with invalid names
 @pytest.mark.parametrize("invalid_name", [
     "",  # Empty string
     "A" * 51,  # Exceeds the maximum character limit
 ])
 def test_create_person_invalid_name(db, invalid_name):
     response_create = client.post("/persons", json={"name": invalid_name})
-    assert response_create.status_code == 422  # Expecting a validation error
+    assert response_create.status_code == 400  # Expecting a validation error
 
 # Parameterized test cases for creating persons with duplicate names
 @pytest.mark.parametrize("person_data, expected_status_code", [
@@ -67,11 +58,11 @@ def test_create_person_duplicate_name(db, person_data, expected_status_code):
 
 
 
-# Task tests
+# TASK TESTS
 # Additional parameterized test cases for creating valid tasks
 @pytest.mark.parametrize("task_data", [
-    ({"name": "Task 1", "description": "Description 1", "completed": False, "startdate": "2023-09-07", "enddate": None}),  # Valid task
-    ({"name": "Task 2", "description": "Description 2", "completed": True, "startdate": "2023-09-08", "enddate": "2023-09-10"}),  # Valid task
+    ({"name": "Task 1", "description": "Description 1", "completed": False, "startdate": "2023-09-07", "enddate": None}),
+    ({"name": "Task 2", "description": "Description 2", "completed": True, "startdate": "2023-09-08", "enddate": "2023-09-10"}),
 ])
 def test_create_valid_task(db, task_data):
     test_person_data = {
@@ -172,47 +163,3 @@ def test_create_task_end_date_earlier_than_start_date(db, task_data, expected_st
     # Attempt to create a task with an end date earlier than start date
     response_create_task = client.post("/tasks", json=task_data, params={"person_id": created_person["id"]})
     assert response_create_task.status_code == expected_status_code  # Expecting a validation error
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-# sample_person_data = {
-#     "name": "John Doe"
-# }
-
-# sample_task_data = {
-#     "name": "Task 1",
-#     "description": "Description for Task 1",
-#     "completed": False,
-#     "startdate": "2023-09-01",
-#     "enddate": "2023-09-07"
-# }
-
-# def test_read_root():
-#     response = client.get("/")
-#     assert response.status_code == 200
-#     assert response.json() == {'hello': 'world'}
-
-# def test_create_person():
-#     response = client.post("/persons", json=sample_person_data)
-#     assert response.status_code == 200
-#     assert "id" in response.json()  # Ensure the response contains an "id" field

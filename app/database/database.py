@@ -15,16 +15,12 @@ load_dotenv()
 # Get environment variables
 DATABASE_USERNAME = os.getenv("DATABASE_USERNAME")
 DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
-DATABASE = os.getenv("DATABASE")
 DATABASE_HOST = os.getenv("DATABASE_HOST")
-
-# task_db is the database we want to connect to
+DATABASE = os.getenv("DATABASE")
 DATABASE_URL = f'mysql+pymysql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE}'
+
 engine = create_engine(DATABASE_URL)
-
-# Create the tables based on the models 
 models.Base.metadata.create_all(bind=engine)
-
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 def get_db():

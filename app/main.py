@@ -31,6 +31,10 @@ def create_person(person: schemas.PersonCreate, db: Session = Depends(database.g
     db_person = crud.get_person_by_name(db, person.name)
     if db_person:
         raise HTTPException(status_code=400, detail="Person with this name already registered")
+    if not person.name:
+        raise HTTPException(status_code=400, detail="Person name cannot be empty!")
+    if len(person.name)>50:
+        raise HTTPException(status_code=400, detail="Person name is too long!")
     return crud.create_person(db=db, person=person)
 
 @app.get("/persons", response_model=list[schemas.Person])

@@ -2,6 +2,7 @@
 -- to make this script get executed again, run docker-compose down -v && docker-compose up --build 
 
 CREATE DATABASE IF NOT EXISTS task_db;
+CREATE DATABASE IF NOT EXISTS test_db;
 
 -- create table tasks(
 --    id INT AUTO_INCREMENT PRIMARY KEY,
