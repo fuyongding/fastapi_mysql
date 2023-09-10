@@ -126,7 +126,13 @@ def create_task(
     """
     db_person = crud.get_person_by_id(db, person_id)
     if not db_person:
-        raise HTTPException(status_code=404, detail="Person with this id does not exist")
+        raise HTTPException(status_code=404, detail="Task with this id does not exist")
+    if not task.name:
+        raise HTTPException(status_code=400, detail="Task name cannot be empty!")
+    if len(task.name)>50:
+        raise HTTPException(status_code=400, detail="Task name is too long!")
+    if len(task.description)>60:
+        raise HTTPException(status_code=400, detail="Task description is too long!")
     return crud.create_task(db, task, person_id)
 
 @app.get("/tasks", response_model=list[schemas.Task])
@@ -158,9 +164,8 @@ def get_task_by_id(
     """
     db_task = crud.get_task_by_id(db, task_id)
     if not db_task:
-        # 400: bad request
         raise HTTPException(
-            status_code=400, 
+            status_code=404, 
             detail="Task with this id does not exist"
             ) 
     return db_task
