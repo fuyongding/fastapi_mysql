@@ -17,7 +17,7 @@ def create_person(db: Session, person: schemas.PersonCreate):
     Returns:
         Person: newly created person
     """
-    db_person = models.Person(**person.dict())
+    db_person = models.Person(**person.model_dump())
     db.add(db_person)
     db.commit()
     db.refresh(db_person)
@@ -61,7 +61,7 @@ def get_person_by_id(db: Session, person_id: int):
     return db_person
 
 def update_person(db: Session, person_id: int, person_update: schemas.PersonBase):
-    """_summary_
+    """update person by id
 
     Args:
         db (Session): local db session
@@ -76,7 +76,7 @@ def update_person(db: Session, person_id: int, person_update: schemas.PersonBase
     if existing_person is None:
         return None 
 
-    for attr, value in person_update.dict().items():
+    for attr, value in person_update.model_dump().items():
         setattr(existing_person, attr, value)
         
     db.commit()
@@ -115,7 +115,7 @@ def create_task(db: Session, task: schemas.TaskCreate, person_id: int):
     Returns:
         Task: newly created task
     """
-    db_task = models.Task(**task.dict(), assigned_person_id = person_id)
+    db_task = models.Task(**task.model_dump(), assigned_person_id = person_id)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
@@ -161,7 +161,7 @@ def update_task(db: Session, task_id: int, task_update: schemas.PersonBase):
     if existing_task is None:
         return None 
 
-    for attr, value in task_update.dict().items():
+    for attr, value in task_update.model_dump().items():
         setattr(existing_task, attr, value)
         
     db.commit()

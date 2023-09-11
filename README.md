@@ -1,11 +1,11 @@
-**Docker-compose commands for running the application** \
-- docker-compose up --build (running for the first time)
+**Docker-compose commands** \
+- docker-compose up --build (building)
 - docker-compose up (subsequent startups)
 - docker-compose down (remove containers)
-- docker-compose stop / ctrl + c in terminal (stop containers in docker-compose)
 - docker-compose down -v (remove containers and volumes)
+- docker-compose stop / ctrl + c in terminal (stop containers in docker-compose)
 
-**Swagger docs** : localhost:8000/docs
+**Swagger** : localhost:8000/docs
 
 **TODOS:**
 - Move sql.init logic to application side **(DONE)**

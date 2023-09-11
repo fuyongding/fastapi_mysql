@@ -27,10 +27,7 @@ class Task(TaskBase):
     assigned_person_id: int
     model_config = ConfigDict(from_attributes=True)
 
-    # class Config:
-    #     """treat Person class as ORM model
-    #     """
-    #     orm_mode = True
+# ------------------------------------------------------------------------
 
 class PersonBase(BaseModel):
     """Schema for person updates
@@ -48,8 +45,3 @@ class Person(PersonBase):
     id: int
     tasks: list[Task] = []
     model_config = ConfigDict(from_attributes=True)
-
-    # class Config:
-    #     """treat Person class as ORM model
-    #     """
-    #     orm_mode = True

@@ -3,11 +3,12 @@ Main module that provides the crud endpoints for the webservice
 """
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
-from fastapi import FastAPI, Path, Query, HTTPException, Depends
+from fastapi import FastAPI, Path, Query, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from crud import crud
 from database import database
 from schema import schemas
+from datetime import datetime
 
 app = FastAPI()
 
@@ -17,8 +18,11 @@ def root_route():
     """
     return {"hello":"world"}
 
-@app.post("/persons", response_model=schemas.Person)
-def create_person(person: schemas.PersonCreate, db: Session = Depends(database.get_db)):
+@app.post("/persons", response_model=schemas.Person, status_code=status.HTTP_201_CREATED)
+def create_person(
+    person: schemas.PersonCreate, 
+    db: Session = Depends(database.get_db)
+):
     """POST endpoint for person
 
     Args:
@@ -47,7 +51,8 @@ def get_all_persons(db: Session = Depends(database.get_db)):
     Returns:
         list[Person]: a list of all persons
     """
-    return crud.get_all_persons(db)
+    response = crud.get_all_persons(db)
+    return response
 
 @app.get("/persons/{person_id}", response_model=schemas.Person)
 def get_person_by_id(
@@ -86,13 +91,20 @@ def update_person(
     Returns:
         Person: updated person
     """
+    if not person_update.name:
+        raise HTTPException(status_code=400, detail="Person name cannot be empty!")
+    if len(person_update.name)>50:
+        raise HTTPException(status_code=400, detail="Person name is too long!")
     updated_person = crud.update_person(db, person_id, person_update)
     if updated_person is None:
         raise HTTPException(status_code=404, detail="Person with this id does not exist")
     return updated_person
 
-@app.delete("/persons/{person_id}", response_model=dict)
-def delete_person(person_id: int, db: Session = Depends(database.get_db)):
+@app.delete("/persons/{person_id}", status_code=status.HTTP_204_NO_CONTENT)
+def delete_person(
+    person_id: int, 
+    db: Session = Depends(database.get_db)
+):
     """DELETE endpoint to delete person
 
     Args:
@@ -105,9 +117,12 @@ def delete_person(person_id: int, db: Session = Depends(database.get_db)):
     delete_success = crud.delete_person(db, person_id)
     if not delete_success:
         raise HTTPException(status_code=404, detail="Person not found")
-    return {"message": "Person deleted"}
 
-@app.post("/tasks", response_model=schemas.Task)
+    return None
+
+# ------------------------------------------------------------------------------------------
+
+@app.post("/tasks", response_model=schemas.Task, status_code=status.HTTP_201_CREATED)
 def create_task(
     *, 
     task: schemas.TaskCreate, 
@@ -127,12 +142,27 @@ def create_task(
     db_person = crud.get_person_by_id(db, person_id)
     if not db_person:
         raise HTTPException(status_code=404, detail="Task with this id does not exist")
+
     if not task.name:
         raise HTTPException(status_code=400, detail="Task name cannot be empty!")
+    if not task.startdate:
+        raise HTTPException(status_code=400, detail="Task start date cannot be null!")
     if len(task.name)>50:
         raise HTTPException(status_code=400, detail="Task name is too long!")
-    if len(task.description)>60:
+    if len(task.description)>100:
         raise HTTPException(status_code=400, detail="Task description is too long!")
+    if (task.completed and not task.enddate) or (task.enddate and not task.completed):
+        raise HTTPException(status_code=400, detail="enddate and completed values are invalid!")
+
+    try:
+        start_date = datetime.strptime(str(task.startdate), "%Y-%m-%d")
+        if task.enddate:
+            end_date = datetime.strptime(str(task.enddate), "%Y-%m-%d")
+            if start_date > end_date:
+                raise HTTPException(status_code=400, detail="End date must be later than start date")
+    except ValueError:
+        raise HTTPException(status_code=422, detail="Invalid date format. Use YYYY-MM-DD format for dates.")
+
     return crud.create_task(db, task, person_id)
 
 @app.get("/tasks", response_model=list[schemas.Task])
@@ -195,7 +225,7 @@ def update_task(
         )
     return updated_task
 
-@app.delete("/tasks/{task_id}", response_model=dict)
+@app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_task(task_id: int, db: Session = Depends(database.get_db)):
     """DELETE endpoint to delete task
 
@@ -209,4 +239,5 @@ def delete_task(task_id: int, db: Session = Depends(database.get_db)):
     delete_success = crud.delete_task(db, task_id)
     if not delete_success:
         raise HTTPException(status_code=404, detail="Task not found")
-    return {"message": "Task deleted"}
+
+    return None

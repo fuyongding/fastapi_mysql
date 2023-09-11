@@ -8,18 +8,16 @@ from sqlalchemy.orm import relationship, declarative_base
 Base = declarative_base()
 
 class Task(Base):
-    """Task table
-
-    Args:
-        Base (_type_): _description_
+    """
+    Task table
     """
     __tablename__ = "tasks"
 
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(30), index=True)
-    description = Column(String(60), index=True)
+    description = Column(String(100), index=True)
     completed = Column(Boolean, default=False)
-    startdate = Column(Date, nullable=True)
+    startdate = Column(Date, nullable=False)
     enddate = Column(Date, nullable=True)
     assigned_person_id = Column(Integer, ForeignKey("persons.id"))
 
@@ -27,10 +25,8 @@ class Task(Base):
     assigned_person = relationship("Person", back_populates="tasks")
 
 class Person(Base):
-    """Person table
-
-    Args:
-        Base (_type_): _description_
+    """
+    Person table
     """
     __tablename__ = "persons"
 
