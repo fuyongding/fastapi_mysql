@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from model import models
 from schema import schemas
 
+
 def create_person(db: Session, person: schemas.PersonCreate):
     """create person method
 
@@ -23,6 +24,7 @@ def create_person(db: Session, person: schemas.PersonCreate):
     db.refresh(db_person)
     return db_person
 
+
 def get_all_persons(db: Session):
     """method to get all persons
 
@@ -33,6 +35,7 @@ def get_all_persons(db: Session):
         list[Person]: list of all people
     """
     return db.query(models.Person).all()
+
 
 def get_person_by_name(db: Session, name: str):
     """get person by name
@@ -47,6 +50,7 @@ def get_person_by_name(db: Session, name: str):
     db_person = db.query(models.Person).filter(models.Person.name == name).first()
     return db_person
 
+
 def get_person_by_id(db: Session, person_id: int):
     """get person by id
 
@@ -60,6 +64,7 @@ def get_person_by_id(db: Session, person_id: int):
     db_person = db.query(models.Person).filter(models.Person.id == person_id).first()
     return db_person
 
+
 def update_person(db: Session, person_id: int, person_update: schemas.PersonBase):
     """update person by id
 
@@ -71,17 +76,20 @@ def update_person(db: Session, person_id: int, person_update: schemas.PersonBase
     Returns:
         Person: person with updated details
     """
-    existing_person = db.query(models.Person).filter(models.Person.id == person_id).first()
+    existing_person = (
+        db.query(models.Person).filter(models.Person.id == person_id).first()
+    )
 
     if existing_person is None:
-        return None 
+        return None
 
     for attr, value in person_update.model_dump().items():
         setattr(existing_person, attr, value)
-        
+
     db.commit()
-    db.refresh(existing_person) 
+    db.refresh(existing_person)
     return existing_person
+
 
 def delete_person(db: Session, person_id: int):
     """delete person by id
@@ -93,7 +101,9 @@ def delete_person(db: Session, person_id: int):
     Returns:
         boolean: True if delete success, else False
     """
-    existing_person = db.query(models.Person).filter(models.Person.id == person_id).first()
+    existing_person = (
+        db.query(models.Person).filter(models.Person.id == person_id).first()
+    )
     if existing_person:
         # delete tasks assigned to person before deleting the person
         for task in existing_person.tasks:
@@ -103,6 +113,7 @@ def delete_person(db: Session, person_id: int):
         db.commit()
         return True
     return False
+
 
 def create_task(db: Session, task: schemas.TaskCreate, person_id: int):
     """create new task
@@ -115,11 +126,12 @@ def create_task(db: Session, task: schemas.TaskCreate, person_id: int):
     Returns:
         Task: newly created task
     """
-    db_task = models.Task(**task.model_dump(), assigned_person_id = person_id)
+    db_task = models.Task(**task.model_dump(), assigned_person_id=person_id)
     db.add(db_task)
     db.commit()
     db.refresh(db_task)
     return db_task
+
 
 def get_all_tasks(db: Session):
     """get all tasks
@@ -131,6 +143,7 @@ def get_all_tasks(db: Session):
         list[Task]: list of all tasks
     """
     return db.query(models.Task).all()
+
 
 def get_task_by_id(db: Session, task_id: int):
     """get task by id
@@ -145,12 +158,13 @@ def get_task_by_id(db: Session, task_id: int):
     db_task = db.query(models.Task).filter(models.Task.id == task_id).first()
     return db_task
 
+
 def update_task(db: Session, task_id: int, task_update: schemas.PersonBase):
     """update task based on task id
 
     Args:
         db (Session): local db session
-        task_id (int): 
+        task_id (int):
         task_update (schemas.PersonBase): new task
 
     Returns:
@@ -159,14 +173,15 @@ def update_task(db: Session, task_id: int, task_update: schemas.PersonBase):
     existing_task = db.query(models.Task).filter(models.Task.id == task_id).first()
 
     if existing_task is None:
-        return None 
+        return None
 
     for attr, value in task_update.model_dump().items():
         setattr(existing_task, attr, value)
-        
+
     db.commit()
-    db.refresh(existing_task) 
+    db.refresh(existing_task)
     return existing_task
+
 
 def delete_task(db: Session, task_id: int):
     """delete task by id
