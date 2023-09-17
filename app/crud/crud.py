@@ -105,10 +105,6 @@ def delete_person(db: Session, person_id: int):
         db.query(models.Person).filter(models.Person.id == person_id).first()
     )
     if existing_person:
-        # delete tasks assigned to person before deleting the person
-        for task in existing_person.tasks:
-            print(task)
-            delete_task(db, task.id)
         db.delete(existing_person)
         db.commit()
         return True
