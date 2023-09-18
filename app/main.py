@@ -10,6 +10,9 @@ from database import database
 from schema import schemas
 from datetime import datetime
 
+TASK_ID_NOT_EXIST_MESSAGE = "Task with this id does not exist"
+TIME_FORMAT = "%Y-%m-%d"
+
 app = FastAPI()
 
 
@@ -147,7 +150,7 @@ def create_task(
     """
     db_person = crud.get_person_by_id(db, person_id)
     if not db_person:
-        raise HTTPException(status_code=404, detail="Task with this id does not exist")
+        raise HTTPException(status_code=404, detail="TASK_ID_NOT_EXIST_MESSAGE")
 
     if not task.name:
         raise HTTPException(status_code=400, detail="Task name cannot be empty!")
@@ -163,9 +166,9 @@ def create_task(
         )
 
     try:
-        start_date = datetime.strptime(str(task.startdate), "%Y-%m-%d")
+        start_date = datetime.strptime(str(task.startdate), TIME_FORMAT)
         if task.enddate:
-            end_date = datetime.strptime(str(task.enddate), "%Y-%m-%d")
+            end_date = datetime.strptime(str(task.enddate), TIME_FORMAT)
             if start_date > end_date:
                 raise HTTPException(
                     status_code=400, detail="End date must be later than start date"
@@ -209,7 +212,7 @@ def get_task_by_id(
     """
     db_task = crud.get_task_by_id(db, task_id)
     if not db_task:
-        raise HTTPException(status_code=404, detail="Task with this id does not exist")
+        raise HTTPException(status_code=404, detail="TASK_ID_NOT_EXIST_MESSAGE")
     return db_task
 
 
@@ -246,9 +249,9 @@ def update_task(
         )
 
     try:
-        start_date = datetime.strptime(str(task_update.startdate), "%Y-%m-%d")
+        start_date = datetime.strptime(str(task_update.startdate), TIME_FORMAT)
         if task_update.enddate:
-            end_date = datetime.strptime(str(task_update.enddate), "%Y-%m-%d")
+            end_date = datetime.strptime(str(task_update.enddate), TIME_FORMAT)
             if start_date > end_date:
                 raise HTTPException(
                     status_code=400, detail="End date must be later than start date"
@@ -260,7 +263,7 @@ def update_task(
         )
     updated_task = crud.update_task(db, task_id, task_update)
     if updated_task is None:
-        raise HTTPException(status_code=404, detail="Task with this id does not exist")
+        raise HTTPException(status_code=404, detail="TASK_ID_NOT_EXIST_MESSAGE")
     return updated_task
 
 
