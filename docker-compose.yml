@@ -17,23 +17,6 @@ services:
     networks:
       - backend
 
-  # pytest:
-  #   container_name: pytest
-  #   build:
-  #     context: ./app
-  #     dockerfile: Dockerfile-app  
-  #   environment:
-  #      - TESTING=true 
-  #   ports:
-  #     - "80:80"
-  #   depends_on:
-  #     mysql-db:
-  #       condition: service_healthy
-  #   env_file:
-  #     - ./app/tests/test.env
-  #   networks:
-  #     - backend
-
   mysql-db:
     container_name: mysql
     build:
@@ -51,6 +34,14 @@ services:
             retries: 10
     ports:
       - "3306:3306"
+    networks:
+      - backend
+    
+  sonarqube:
+    image: sonarqube:lts-community
+    container_name: sonarqube
+    ports:
+      - "9000:9000"
     networks:
       - backend
 
