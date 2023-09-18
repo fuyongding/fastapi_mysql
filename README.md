@@ -8,9 +8,5 @@
 **Swagger** : localhost:8000/docs
 
 **TODOS:**
-- Move sql.init logic to application side **(DONE)**
-- Use SQLachemy ORM **(DONE)**
-- use pylint **(DONE)**
-- have proper code structure
-- use pytest for testing
-- SonarQube
+- DAO (class based approach in designing)
+- handling different config for diff environment (diff env variable)
