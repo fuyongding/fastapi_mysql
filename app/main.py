@@ -32,6 +32,7 @@ def create_person(person: schemas.PersonCreate, db: Session = Depends(database.g
     Returns:
         Person: newly created person
     """
+    print("calling create_person method")
     db_person = crud.get_person_by_name(db, person.name)
     if db_person:
         raise HTTPException(

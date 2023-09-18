@@ -1,9 +1,40 @@
+import os
+from dotenv import load_dotenv
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 import pytest
 from fastapi.testclient import TestClient
 from ..main import app
 from database import database
 from model import models
-from datetime import datetime
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get testing environment variables
+DATABASE_USERNAME = os.getenv("DATABASE_USERNAME")
+DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
+DATABASE_HOST = os.getenv("DATABASE_HOST")
+TEST_DATABASE = os.getenv("TEST_DATABASE")
+TEST_DATABASE_URL = f"mysql+pymysql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{TEST_DATABASE}"
+
+test_engine = create_engine(TEST_DATABASE_URL)
+TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+
+
+def override_get_db():
+    """
+    gets local session in test database, used for testing
+    """
+    try:
+        db = TestSessionLocal()
+        yield db
+    finally:
+        db.close()
+
+
+# overwriting dependency in the endpoint routes to use test database
+app.dependency_overrides[database.get_db] = override_get_db
 
 client = TestClient(app)
 
@@ -11,18 +42,11 @@ client = TestClient(app)
 @pytest.fixture(scope="function")
 def db():
     """
-    Fixture to create a new database session and create tables for before each test
-    Drops table and closes session after each test
+    Fixture to create tables and drop tables before and after every test
     """
-    print("getting db")
-    db = database.SessionLocal()
-    models.Base.metadata.create_all(bind=database.engine)
-    try:
-        yield db
-    finally:
-        print("closing db")
-        models.Base.metadata.drop_all(bind=database.engine)
-        db.close()
+    models.Base.metadata.create_all(bind=test_engine)
+    yield
+    models.Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.mark.parametrize(
@@ -868,457 +892,462 @@ def test_delete_task_by_id_not_found(db):
 
 # -------------------------------------------------------------------------------
 
-# @pytest.mark.parametrize(
-#     "task_data",
-#     [
-#         (
-#             {
-#                 "name": "",
-#                 "description": "Description 1",
-#                 "completed": False,
-#                 "startdate": "2023-09-07",
-#                 "enddate": None,
-#             }
-#         ),
-#         (
-#             {
-#                 "name": "A" * 51,
-#                 "description": "Description 2",
-#                 "completed": True,
-#                 "startdate": "2023-09-08",
-#                 "enddate": "2023-09-10",
-#             }
-#         )
-#     ],
-# )
-# def test_create_task_invalid_name(db, task_data):
-#     """
-#     Test create tasks with invalid name
-#     1) empty string
-#     2) exceed character count
-#     """
-#     test_person_data = {"name": "John Doe"}
 
-#     response_create_person = client.post("/persons", json=test_person_data)
-#     assert response_create_person.status_code == 201
-#     created_person = response_create_person.json()
+@pytest.mark.parametrize(
+    "task_data",
+    [
+        (
+            {
+                "name": "",
+                "description": "Description 1",
+                "completed": False,
+                "startdate": "2023-09-07",
+                "enddate": None,
+            }
+        ),
+        (
+            {
+                "name": "A" * 51,
+                "description": "Description 2",
+                "completed": True,
+                "startdate": "2023-09-08",
+                "enddate": "2023-09-10",
+            }
+        ),
+    ],
+)
+def test_create_task_invalid_name(db, task_data):
+    """
+    Test create tasks with invalid name
+    1) empty string
+    2) exceed character count
+    """
+    test_person_data = {"name": "John Doe"}
 
-#     response_create_task = client.post(
-#         "/tasks", json=task_data, params={"person_id": created_person["id"]}
-#     )
-#     assert response_create_task.status_code == 400
+    response_create_person = client.post("/persons", json=test_person_data)
+    assert response_create_person.status_code == 201
+    created_person = response_create_person.json()
 
-
-# @pytest.mark.parametrize(
-#     "task_data",
-#     [
-#         (
-#             {
-#                 "name": "Task 1",
-#                 "description": "A" * 101,
-#                 "completed": False,
-#                 "startdate": "2023-09-07",
-#                 "enddate": None,
-#             }
-#         ),
-#         (
-#             {
-#                 "name": "Task 2",
-#                 "description": "B" * 101,
-#                 "completed": True,
-#                 "startdate": "2023-09-08",
-#                 "enddate": "2023-09-10",
-#             }
-#         ),
-#     ],
-# )
-# def test_create_task_invalid_description(db, task_data):
-#     """
-#     test create task with description that exceeds character limit
-#     """
-#     test_person_data = {"name": "John Doe"}
-
-#     response_create_person = client.post("/persons", json=test_person_data)
-#     assert response_create_person.status_code == 201
-#     created_person = response_create_person.json()
-
-#     response_create_task = client.post(
-#         "/tasks", json=task_data, params={"person_id": created_person["id"]}
-#     )
-#     assert response_create_task.status_code == 400
+    response_create_task = client.post(
+        "/tasks", json=task_data, params={"person_id": created_person["id"]}
+    )
+    assert response_create_task.status_code == 400
 
 
-# @pytest.mark.parametrize(
-#     "task_data",
-#     [
-#         (
-#             {
-#                 "name": "Task 1",
-#                 "description": "Description 1",
-#                 "completed": False,
-#                 "startdate": None,
-#                 "enddate": "2023-09-10",
-#             }
-#         ),
-#         (
-#             {
-#                 "name": "Task 2",
-#                 "description": "Description 2",
-#                 "completed": True,
-#                 "startdate": None,
-#                 "enddate": None,
-#             }
-#         ),
-#     ],
-# )
-# def test_create_task_invalid_empty_start_date(db, task_data):
-#     """
-#     test create task with null start date
-#     """
-#     test_person_data = {"name": "John Doe"}
+@pytest.mark.parametrize(
+    "task_data",
+    [
+        (
+            {
+                "name": "Task 1",
+                "description": "A" * 101,
+                "completed": False,
+                "startdate": "2023-09-07",
+                "enddate": None,
+            }
+        ),
+        (
+            {
+                "name": "Task 2",
+                "description": "B" * 101,
+                "completed": True,
+                "startdate": "2023-09-08",
+                "enddate": "2023-09-10",
+            }
+        ),
+    ],
+)
+def test_create_task_invalid_description(db, task_data):
+    """
+    test create task with description that exceeds character limit
+    """
+    test_person_data = {"name": "John Doe"}
 
-#     response_create_person = client.post("/persons", json=test_person_data)
-#     assert response_create_person.status_code == 201
-#     created_person = response_create_person.json()
+    response_create_person = client.post("/persons", json=test_person_data)
+    assert response_create_person.status_code == 201
+    created_person = response_create_person.json()
 
-#     response_create_task = client.post(
-#         "/tasks", json=task_data, params={"person_id": created_person["id"]}
-#     )
-#     assert response_create_task.status_code == 400
-
-
-# @pytest.mark.parametrize(
-#     "task_data",
-#     [
-#         (
-#             {
-#                 "name": "Task 1",
-#                 "description": "Description 1",
-#                 "completed": False,
-#                 "startdate": "2023-09-10",
-#                 "enddate": "2023-09-09",
-#             }
-#         ),
-#         (
-#             {
-#                 "name": "Task 2",
-#                 "description": "Description 2",
-#                 "completed": True,
-#                 "startdate": "2023-09-10",
-#                 "enddate": "2023-09-01",
-#             }
-#         ),
-#     ],
-# )
-# def test_create_task_invalid_end_date_earlier_than_start_date(db, task_data):
-#     """
-#     test create task with end date earlier than start date
-#     """
-#     test_person_data = {"name": "John Doe"}
-
-#     response_create_person = client.post("/persons", json=test_person_data)
-#     assert response_create_person.status_code == 201
-#     created_person = response_create_person.json()
-
-#     response_create_task = client.post(
-#         "/tasks", json=task_data, params={"person_id": created_person["id"]}
-#     )
-#     assert response_create_task.status_code == 400
-#
-# @pytest.mark.parametrize(
-#     "task_data",
-#     [
-#         (
-#             {
-#                 "name": "Task 1",
-#                 "description": "Description 1",
-#                 "completed": True,
-#                 "startdate": "2023-09-05",
-#                 "enddate": None,
-#             }
-#         ),
-#         (
-#             {
-#                 "name": "Task 2",
-#                 "description": "Description 2",
-#                 "completed": False,
-#                 "startdate": "2023-09-01",
-#                 "enddate": "2023-09-10",
-#             }
-#         ),
-#     ],
-# )
-# def test_create_task_invalid_completed_and_end_date_values(db, task_data):
-#     """
-#     test create tasks with invalid completed and enddate values
-#     1) completed: True, enddate: null
-#     2) completed: False, enddate: exists
-#     """
-#     test_person_data = {"name": "John Doe"}
-
-#     response_create_person = client.post("/persons", json=test_person_data)
-#     assert response_create_person.status_code == 201
-#     created_person = response_create_person.json()
-
-#     response_create_task = client.post(
-#         "/tasks", json=task_data, params={"person_id": created_person["id"]}
-#     )
-#     assert response_create_task.status_code == 400
-
-# @pytest.mark.parametrize(
-#     "update_task_data",
-#     [
-#         (
-#             {
-#                 "name": "",
-#                 "description": "Description 1",
-#                 "completed": False,
-#                 "startdate": "2023-09-07",
-#                 "enddate": None,
-#             }
-#         ),
-#         (
-#             {
-#                 "name": "A" * 51,
-#                 "description": "Description 2",
-#                 "completed": True,
-#                 "startdate": "2023-09-08",
-#                 "enddate": "2023-09-10",
-#             }
-#         ),
-#     ],
-# )
-# def test_update_task_by_id_invalid_name(db, update_task_data):
-#     """
-#     Test update tasks with invalid name
-#     1) empty string
-#     2) exceed character count
-#     """
-#     test_person_data = {"name": "John Doe"}
-
-#     response_create_person = client.post("/persons", json=test_person_data)
-#     assert response_create_person.status_code == 201
-#     created_person = response_create_person.json()
-
-#     test_task_data = {
-#         "name": "task 1",
-#         "description": "task description",
-#         "completed": True,
-#         "startdate": "2023-09-06",
-#         "enddate": "2023-09-15",
-#     }
-#     response_create_task = client.post(
-#         "/tasks", json=test_task_data, params={"person_id": created_person["id"]}
-#     )
-#     assert response_create_task.status_code == 201
-
-#     response_update_task = client.put(
-#         f"/tasks/{created_person['id']}", json=update_task_data
-#     )
-#     assert response_update_task.status_code == 400
+    response_create_task = client.post(
+        "/tasks", json=task_data, params={"person_id": created_person["id"]}
+    )
+    assert response_create_task.status_code == 400
 
 
-# @pytest.mark.parametrize(
-#     "update_task_data",
-#     [
-#         (
-#             {
-#                 "name": "Task 1",
-#                 "description": "A" * 101,
-#                 "completed": False,
-#                 "startdate": "2023-09-07",
-#                 "enddate": None,
-#             }
-#         ),
-#         (
-#             {
-#                 "name": "Task 2",
-#                 "description": "B" * 101,
-#                 "completed": True,
-#                 "startdate": "2023-09-08",
-#                 "enddate": "2023-09-10",
-#             }
-#         ),
-#     ],
-# )
-# def test_update_task_by_id_invalid_description(db, update_task_data):
-#     """
-#     test update task with description that exceeds character limit
-#     """
-#     test_person_data = {"name": "John Doe"}
+@pytest.mark.parametrize(
+    "task_data",
+    [
+        (
+            {
+                "name": "Task 1",
+                "description": "Description 1",
+                "completed": False,
+                "startdate": None,
+                "enddate": "2023-09-10",
+            }
+        ),
+        (
+            {
+                "name": "Task 2",
+                "description": "Description 2",
+                "completed": True,
+                "startdate": None,
+                "enddate": None,
+            }
+        ),
+    ],
+)
+def test_create_task_invalid_empty_start_date(db, task_data):
+    """
+    test create task with null start date
+    """
+    test_person_data = {"name": "John Doe"}
 
-#     response_create_person = client.post("/persons", json=test_person_data)
-#     assert response_create_person.status_code == 201
-#     created_person = response_create_person.json()
+    response_create_person = client.post("/persons", json=test_person_data)
+    assert response_create_person.status_code == 201
+    created_person = response_create_person.json()
 
-#     test_task_data = {
-#         "name": "task 1",
-#         "description": "task description",
-#         "completed": True,
-#         "startdate": "2023-09-06",
-#         "enddate": "2023-09-15",
-#     }
-#     response_create_task = client.post(
-#         "/tasks", json=test_task_data, params={"person_id": created_person["id"]}
-#     )
-#     assert response_create_task.status_code == 201
-
-#     response_update_task = client.put(
-#         f"/tasks/{created_person['id']}", json=update_task_data
-#     )
-#     assert response_update_task.status_code == 400
+    response_create_task = client.post(
+        "/tasks", json=task_data, params={"person_id": created_person["id"]}
+    )
+    assert response_create_task.status_code == 400
 
 
-# @pytest.mark.parametrize(
-#     "update_task_data",
-#     [
-#         (
-#             {
-#                 "name": "Task 1",
-#                 "description": "Task 1 description",
-#                 "completed": False,
-#                 "startdate": None,
-#                 "enddate": None,
-#             }
-#         ),
-#         (
-#             {
-#                 "name": "Task 2",
-#                 "description": "Task 2 description",
-#                 "completed": True,
-#                 "startdate": None,
-#                 "enddate": "2023-09-10",
-#             }
-#         ),
-#     ],
-# )
-# def test_update_task_by_id_invalid_empty_start_date(db, update_task_data):
-#     """
-#     test update task with empty start date
-#     """
-#     test_person_data = {"name": "John Doe"}
+@pytest.mark.parametrize(
+    "task_data",
+    [
+        (
+            {
+                "name": "Task 1",
+                "description": "Description 1",
+                "completed": False,
+                "startdate": "2023-09-10",
+                "enddate": "2023-09-09",
+            }
+        ),
+        (
+            {
+                "name": "Task 2",
+                "description": "Description 2",
+                "completed": True,
+                "startdate": "2023-09-10",
+                "enddate": "2023-09-01",
+            }
+        ),
+    ],
+)
+def test_create_task_invalid_end_date_earlier_than_start_date(db, task_data):
+    """
+    test create task with end date earlier than start date
+    """
+    test_person_data = {"name": "John Doe"}
 
-#     response_create_person = client.post("/persons", json=test_person_data)
-#     assert response_create_person.status_code == 201
-#     created_person = response_create_person.json()
+    response_create_person = client.post("/persons", json=test_person_data)
+    assert response_create_person.status_code == 201
+    created_person = response_create_person.json()
 
-#     test_task_data = {
-#         "name": "initial task name",
-#         "description": "initial task description",
-#         "completed": True,
-#         "startdate": "2023-09-06",
-#         "enddate": "2023-09-15",
-#     }
-#     response_create_task = client.post(
-#         "/tasks", json=test_task_data, params={"person_id": created_person["id"]}
-#     )
-#     assert response_create_task.status_code == 201
-
-#     response_update_task = client.put(
-#         f"/tasks/{created_person['id']}", json=update_task_data
-#     )
-#     assert response_update_task.status_code == 400
+    response_create_task = client.post(
+        "/tasks", json=task_data, params={"person_id": created_person["id"]}
+    )
+    assert response_create_task.status_code == 400
 
 
-# @pytest.mark.parametrize(
-#     "update_task_data",
-#     [
-#         (
-#             {
-#                 "name": "Task 1",
-#                 "description": "Task 1 description",
-#                 "completed": True,
-#                 "startdate": "2023-09-05",
-#                 "enddate": "2023-09-01",
-#             }
-#         ),
-#         (
-#             {
-#                 "name": "Task 2",
-#                 "description": "Task 2 description",
-#                 "completed": True,
-#                 "startdate": "2023-09-10",
-#                 "enddate": "2023-09-01",
-#             }
-#         ),
-#     ],
-# )
-# def test_update_task_by_id_invalid_end_date_earlier_than_start_date(
-#     db, update_task_data
-# ):
-#     """
-#     test update task with end date earlier than start date
-#     """
-#     test_person_data = {"name": "John Doe"}
+@pytest.mark.parametrize(
+    "task_data",
+    [
+        (
+            {
+                "name": "Task 1",
+                "description": "Description 1",
+                "completed": True,
+                "startdate": "2023-09-05",
+                "enddate": None,
+            }
+        ),
+        (
+            {
+                "name": "Task 2",
+                "description": "Description 2",
+                "completed": False,
+                "startdate": "2023-09-01",
+                "enddate": "2023-09-10",
+            }
+        ),
+    ],
+)
+def test_create_task_invalid_completed_and_end_date_values(db, task_data):
+    """
+    test create tasks with invalid completed and enddate values
+    1) completed: True, enddate: null
+    2) completed: False, enddate: exists
+    """
+    test_person_data = {"name": "John Doe"}
 
-#     response_create_person = client.post("/persons", json=test_person_data)
-#     assert response_create_person.status_code == 201
-#     created_person = response_create_person.json()
+    response_create_person = client.post("/persons", json=test_person_data)
+    assert response_create_person.status_code == 201
+    created_person = response_create_person.json()
 
-#     test_task_data = {
-#         "name": "initial task name",
-#         "description": "initial task description",
-#         "completed": True,
-#         "startdate": "2023-09-06",
-#         "enddate": "2023-09-15",
-#     }
-#     response_create_task = client.post(
-#         "/tasks", json=test_task_data, params={"person_id": created_person["id"]}
-#     )
-#     assert response_create_task.status_code == 201
+    response_create_task = client.post(
+        "/tasks", json=task_data, params={"person_id": created_person["id"]}
+    )
+    assert response_create_task.status_code == 400
 
-#     response_update_task = client.put(
-#         f"/tasks/{created_person['id']}", json=update_task_data
-#     )
-#     assert response_update_task.status_code == 400
-# @pytest.mark.parametrize(
-#     "update_task_data",
-#     [
-#         (
-#             {
-#                 "name": "Task 1",
-#                 "description": "Description 1",
-#                 "completed": True,
-#                 "startdate": "2023-09-05",
-#                 "enddate": None,
-#             }
-#         ),
-#         (
-#             {
-#                 "name": "Task 2",
-#                 "description": "Description 2",
-#                 "completed": False,
-#                 "startdate": "2023-09-01",
-#                 "enddate": "2023-09-10",
-#             }
-#         ),
-#     ],
-# )
-# def test_update_tasks_by_id_invalid_completed_and_end_date_values(db, update_task_data):
-#     """
-#     test create tasks with invalid completed and enddate values
-#     1) completed: True, enddate: null
-#     2) completed: False, enddate: exists
-#     """
-#     test_person_data = {"name": "John Doe"}
 
-#     response_create_person = client.post("/persons", json=test_person_data)
-#     assert response_create_person.status_code == 201
-#     created_person = response_create_person.json()
+@pytest.mark.parametrize(
+    "update_task_data",
+    [
+        (
+            {
+                "name": "",
+                "description": "Description 1",
+                "completed": False,
+                "startdate": "2023-09-07",
+                "enddate": None,
+            }
+        ),
+        (
+            {
+                "name": "A" * 51,
+                "description": "Description 2",
+                "completed": True,
+                "startdate": "2023-09-08",
+                "enddate": "2023-09-10",
+            }
+        ),
+    ],
+)
+def test_update_task_by_id_invalid_name(db, update_task_data):
+    """
+    Test update tasks with invalid name
+    1) empty string
+    2) exceed character count
+    """
+    test_person_data = {"name": "John Doe"}
 
-#     test_task_data = {
-#         "name": "initial task name",
-#         "description": "initial task description",
-#         "completed": True,
-#         "startdate": "2023-09-06",
-#         "enddate": "2023-09-15",
-#     }
-#     response_create_task = client.post(
-#         "/tasks", json=test_task_data, params={"person_id": created_person["id"]}
-#     )
-#     assert response_create_task.status_code == 201
+    response_create_person = client.post("/persons", json=test_person_data)
+    assert response_create_person.status_code == 201
+    created_person = response_create_person.json()
 
-#     response_update_task = client.put(
-#         f"/tasks/{created_person['id']}", json=update_task_data
-#     )
-#     assert response_update_task.status_code == 400
+    test_task_data = {
+        "name": "task 1",
+        "description": "task description",
+        "completed": True,
+        "startdate": "2023-09-06",
+        "enddate": "2023-09-15",
+    }
+    response_create_task = client.post(
+        "/tasks", json=test_task_data, params={"person_id": created_person["id"]}
+    )
+    assert response_create_task.status_code == 201
+
+    response_update_task = client.put(
+        f"/tasks/{created_person['id']}", json=update_task_data
+    )
+    assert response_update_task.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "update_task_data",
+    [
+        (
+            {
+                "name": "Task 1",
+                "description": "A" * 101,
+                "completed": False,
+                "startdate": "2023-09-07",
+                "enddate": None,
+            }
+        ),
+        (
+            {
+                "name": "Task 2",
+                "description": "B" * 101,
+                "completed": True,
+                "startdate": "2023-09-08",
+                "enddate": "2023-09-10",
+            }
+        ),
+    ],
+)
+def test_update_task_by_id_invalid_description(db, update_task_data):
+    """
+    test update task with description that exceeds character limit
+    """
+    test_person_data = {"name": "John Doe"}
+
+    response_create_person = client.post("/persons", json=test_person_data)
+    assert response_create_person.status_code == 201
+    created_person = response_create_person.json()
+
+    test_task_data = {
+        "name": "task 1",
+        "description": "task description",
+        "completed": True,
+        "startdate": "2023-09-06",
+        "enddate": "2023-09-15",
+    }
+    response_create_task = client.post(
+        "/tasks", json=test_task_data, params={"person_id": created_person["id"]}
+    )
+    assert response_create_task.status_code == 201
+
+    response_update_task = client.put(
+        f"/tasks/{created_person['id']}", json=update_task_data
+    )
+    assert response_update_task.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "update_task_data",
+    [
+        (
+            {
+                "name": "Task 1",
+                "description": "Task 1 description",
+                "completed": False,
+                "startdate": None,
+                "enddate": None,
+            }
+        ),
+        (
+            {
+                "name": "Task 2",
+                "description": "Task 2 description",
+                "completed": True,
+                "startdate": None,
+                "enddate": "2023-09-10",
+            }
+        ),
+    ],
+)
+def test_update_task_by_id_invalid_empty_start_date(db, update_task_data):
+    """
+    test update task with empty start date
+    """
+    test_person_data = {"name": "John Doe"}
+
+    response_create_person = client.post("/persons", json=test_person_data)
+    assert response_create_person.status_code == 201
+    created_person = response_create_person.json()
+
+    test_task_data = {
+        "name": "initial task name",
+        "description": "initial task description",
+        "completed": True,
+        "startdate": "2023-09-06",
+        "enddate": "2023-09-15",
+    }
+    response_create_task = client.post(
+        "/tasks", json=test_task_data, params={"person_id": created_person["id"]}
+    )
+    assert response_create_task.status_code == 201
+
+    response_update_task = client.put(
+        f"/tasks/{created_person['id']}", json=update_task_data
+    )
+    assert response_update_task.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "update_task_data",
+    [
+        (
+            {
+                "name": "Task 1",
+                "description": "Task 1 description",
+                "completed": True,
+                "startdate": "2023-09-05",
+                "enddate": "2023-09-01",
+            }
+        ),
+        (
+            {
+                "name": "Task 2",
+                "description": "Task 2 description",
+                "completed": True,
+                "startdate": "2023-09-10",
+                "enddate": "2023-09-01",
+            }
+        ),
+    ],
+)
+def test_update_task_by_id_invalid_end_date_earlier_than_start_date(
+    db, update_task_data
+):
+    """
+    test update task with end date earlier than start date
+    """
+    test_person_data = {"name": "John Doe"}
+
+    response_create_person = client.post("/persons", json=test_person_data)
+    assert response_create_person.status_code == 201
+    created_person = response_create_person.json()
+
+    test_task_data = {
+        "name": "initial task name",
+        "description": "initial task description",
+        "completed": True,
+        "startdate": "2023-09-06",
+        "enddate": "2023-09-15",
+    }
+    response_create_task = client.post(
+        "/tasks", json=test_task_data, params={"person_id": created_person["id"]}
+    )
+    assert response_create_task.status_code == 201
+
+    response_update_task = client.put(
+        f"/tasks/{created_person['id']}", json=update_task_data
+    )
+    assert response_update_task.status_code == 400
+
+
+@pytest.mark.parametrize(
+    "update_task_data",
+    [
+        (
+            {
+                "name": "Task 1",
+                "description": "Description 1",
+                "completed": True,
+                "startdate": "2023-09-05",
+                "enddate": None,
+            }
+        ),
+        (
+            {
+                "name": "Task 2",
+                "description": "Description 2",
+                "completed": False,
+                "startdate": "2023-09-01",
+                "enddate": "2023-09-10",
+            }
+        ),
+    ],
+)
+def test_update_tasks_by_id_invalid_completed_and_end_date_values(db, update_task_data):
+    """
+    test create tasks with invalid completed and enddate values
+    1) completed: True, enddate: null
+    2) completed: False, enddate: exists
+    """
+    test_person_data = {"name": "John Doe"}
+
+    response_create_person = client.post("/persons", json=test_person_data)
+    assert response_create_person.status_code == 201
+    created_person = response_create_person.json()
+
+    test_task_data = {
+        "name": "initial task name",
+        "description": "initial task description",
+        "completed": True,
+        "startdate": "2023-09-06",
+        "enddate": "2023-09-15",
+    }
+    response_create_task = client.post(
+        "/tasks", json=test_task_data, params={"person_id": created_person["id"]}
+    )
+    assert response_create_task.status_code == 201
+
+    response_update_task = client.put(
+        f"/tasks/{created_person['id']}", json=update_task_data
+    )
+    assert response_update_task.status_code == 400

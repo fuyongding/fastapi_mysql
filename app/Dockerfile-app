@@ -16,7 +16,7 @@ ENV PATH="$VIRTUAL_ENV/bin:$PATH"
 RUN pip install -r requirements.txt
 
 # Entrypoint script
-CMD ["sh", "-c", "if [ \"$TESTING\" = \"true\" ]; then tail -f /dev/null; else uvicorn main:app --host 0.0.0.0 --port 80; fi"]
+CMD uvicorn main:app --host 0.0.0.0 --port 80
 
 # Using venv (not that clean, running the binaries)
 # FROM python:3.10.12
