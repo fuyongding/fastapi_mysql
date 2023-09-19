@@ -2,7 +2,7 @@ from typing import Optional
 from sqlalchemy.orm import Session
 
 from ..schemas import PersonCreate, PersonBase
-from ..models import Person, Task
+from ..models import Person
 
 
 class PersonDAO:
