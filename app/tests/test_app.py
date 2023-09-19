@@ -8,20 +8,6 @@ from task_manager.main import app
 from task_manager import database
 from task_manager import models
 
-# constants
-PERSONS_ENDPOINT = "/persons"
-TASKS_ENDPOINT = "/tasks"
-TASK_ID_NOT_EXIST_MESSAGE = "Task with this id does not exist"
-PERSON_NAME_ALICE = "Alice Smith"
-PERSON_NAME_JOHN = "John Doe"
-TASK_ONE_NAME = "Task 1"
-TASK_TWO_NAME = "Task 2"
-DESCRIPTION_ONE = "Description 1"
-DESCRIPTION_TWO = "Description 2"
-INITIAL_TASK_NAME = "initial task name"
-INITIAL_TASK_DESCRIPTION = "initial task description"
-
-
 # Load environment variables from .env file
 load_dotenv()
 
@@ -34,6 +20,19 @@ TEST_DATABASE_URL = f"mysql+pymysql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{D
 
 test_engine = create_engine(TEST_DATABASE_URL)
 TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+
+# constants
+PERSONS_ENDPOINT = "/persons"
+TASKS_ENDPOINT = "/tasks"
+TASK_ID_NOT_EXIST_MESSAGE = "Task with this id does not exist"
+PERSON_NAME_ALICE = "Alice Smith"
+PERSON_NAME_JOHN = "John Doe"
+TASK_ONE_NAME = "Task 1"
+TASK_TWO_NAME = "Task 2"
+DESCRIPTION_ONE = "Description 1"
+DESCRIPTION_TWO = "Description 2"
+INITIAL_TASK_NAME = "initial task name"
+INITIAL_TASK_DESCRIPTION = "initial task description"
 
 
 def override_get_db():

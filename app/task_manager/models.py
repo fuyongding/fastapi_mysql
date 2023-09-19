@@ -34,4 +34,5 @@ class Person(Base):
     name = Column(String(50), index=True)
 
     # Establish a one-to-many relationship with Task
+    # cascade delete
     tasks = relationship("Task", back_populates="assigned_person", cascade="all, delete-orphan")
