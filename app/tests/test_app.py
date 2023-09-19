@@ -4,9 +4,9 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 import pytest
 from fastapi.testclient import TestClient
-from ..main import app
-from database import database
-from model import models
+from task_manager.main import app
+from task_manager import database
+from task_manager import models
 
 # constants
 PERSONS_ENDPOINT = "/persons"

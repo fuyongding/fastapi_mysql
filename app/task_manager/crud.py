@@ -4,8 +4,8 @@ Crud methods
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
 from sqlalchemy.orm import Session
-from model import models
-from schema import schemas
+from . import models
+from . import schemas
 
 
 def create_person(db: Session, person: schemas.PersonCreate):

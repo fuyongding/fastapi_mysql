@@ -12,11 +12,11 @@ RUN python3 -m venv $VIRTUAL_ENV
 # put the bin folder of the virtual environment at the front of the PATH variable in the container
 ENV PATH="$VIRTUAL_ENV/bin:$PATH" 
 
-# Install dependencies:
+# Install dependencies
 RUN pip install -r requirements.txt
 
 # Entrypoint script
-CMD uvicorn main:app --host 0.0.0.0 --port 80
+CMD uvicorn task_manager.main:app --host 0.0.0.0 --port 80
 
 # Using venv (not that clean, running the binaries)
 # FROM python:3.10.12

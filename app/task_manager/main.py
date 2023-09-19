@@ -5,9 +5,9 @@ Main module that provides the crud endpoints for the webservice
 # pylint: disable=trailing-whitespace
 from fastapi import FastAPI, Path, Query, HTTPException, Depends, status
 from sqlalchemy.orm import Session
-from crud import crud
-from database import database
-from schema import schemas
+from . import crud
+from . import database
+from . import schemas
 from datetime import datetime
 
 TASK_ID_NOT_EXIST_MESSAGE = "Task with this id does not exist"

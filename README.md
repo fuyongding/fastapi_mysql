@@ -8,5 +8,6 @@
 **Swagger** : localhost:8000/docs
 
 **TODOS:**
-- DAO (class based approach in designing)
+- Combine other files in app folder into one single folder (task_manager) **DONE**
+- DAO (class based approach in designing), by combining crud.py and database.py
 - handling different config for diff environment (diff env variable)
