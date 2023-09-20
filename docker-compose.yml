@@ -3,7 +3,7 @@ services:
   fastapi:
     container_name: fastapi
     build:
-      context: ./app
+      context: ./fastapi_app
       dockerfile: Dockerfile-app  
     ports:
       - "8000:80"
@@ -11,9 +11,9 @@ services:
       mysql-db:
         condition: service_healthy # this ensures fastapi only starts after mysql-db is done starting up
     volumes:
-      - ./app:/app
+      - ./fastapi_app:/app
     env_file:
-      - ./app/.env
+      - ./fastapi_app/.env
     networks:
       - backend
 
