@@ -5,8 +5,8 @@ from sqlalchemy.orm import sessionmaker
 import pytest
 from fastapi.testclient import TestClient
 from task_manager.main import app
-from task_manager import database
-from task_manager import models
+from task_manager.db.database import get_db
+from task_manager.db.models import Base
 
 # Load environment variables from .env file
 load_dotenv()
@@ -47,7 +47,7 @@ def override_get_db():
 
 
 # overwriting dependency in the endpoint routes to use test database
-app.dependency_overrides[database.get_db] = override_get_db
+app.dependency_overrides[get_db] = override_get_db
 
 client = TestClient(app)
 
@@ -57,9 +57,9 @@ def db():
     """
     Fixture to create tables and drop tables before and after every test
     """
-    models.Base.metadata.create_all(bind=test_engine)
+    Base.metadata.create_all(bind=test_engine)
     yield
-    models.Base.metadata.drop_all(bind=test_engine)
+    Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.mark.parametrize(

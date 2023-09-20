@@ -7,8 +7,9 @@ import os
 from fastapi import FastAPI, Path, Query, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from datetime import datetime
-from .schemas import TaskBase, TaskCreate, Task, PersonBase, PersonCreate, Person
-from .database import get_db
+from .schemas.persons import PersonBase, PersonCreate, Person
+from .schemas.tasks import TaskBase, TaskCreate, Task
+from .db.database import get_db
 from .services.person_service import person_service
 from .services.task_service import task_service
 

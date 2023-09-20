@@ -7,7 +7,7 @@ import os
 from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
-from . import models
+from .models import Base
 
 # Load environment variables from .env file
 load_dotenv()
@@ -20,12 +20,13 @@ DATABASE = os.getenv("DATABASE")
 DATABASE_URL = f"mysql+pymysql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{DATABASE}"
 
 engine = create_engine(DATABASE_URL)
-models.Base.metadata.create_all(bind=engine)
+Base.metadata.create_all(bind=engine)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db():
-    """gets a local session of database
+    """gets a local session of database, 
+    and close db after completing operation
 
     Yields:
         db: local session of database

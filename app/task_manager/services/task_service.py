@@ -1,9 +1,9 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 
-from ..schemas import TaskCreate, TaskBase
+from ..schemas.tasks import TaskCreate, TaskBase
 from ..daos.task_dao import TaskDAO, task_dao
-from ..models import Person, Task
+from ..db.models import Person, Task
 
 
 class TaskService:

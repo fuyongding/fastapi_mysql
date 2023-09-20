@@ -1,9 +1,9 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 
-from ..schemas import PersonCreate, PersonBase
+from ..schemas.persons import PersonCreate, PersonBase
 from ..daos.person_dao import PersonDAO, person_dao
-from ..models import Person
+from ..db.models import Person
 
 
 class PersonService:

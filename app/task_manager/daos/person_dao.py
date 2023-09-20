@@ -1,8 +1,8 @@
 from typing import Optional
 from sqlalchemy.orm import Session
 
-from ..schemas import PersonCreate, PersonBase
-from ..models import Person
+from ..schemas.persons import PersonCreate, PersonBase
+from ..db.models import Person
 
 
 class PersonDAO:
