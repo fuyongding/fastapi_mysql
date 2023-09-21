@@ -3,15 +3,14 @@ Main module that provides the crud endpoints for the webservice
 """
 # pylint: disable=invalid-name
 # pylint: disable=trailing-whitespace
-import os
 from fastapi import FastAPI, Path, Query, HTTPException, Depends, status
 from sqlalchemy.orm import Session
 from datetime import datetime
 from .schemas.persons import PersonBase, PersonCreate, Person
 from .schemas.tasks import TaskBase, TaskCreate, Task
-from .db.database import get_db
 from .services.person_service import person_service
 from .services.task_service import task_service
+from .db.database import get_db
 
 app = FastAPI()
 
@@ -22,7 +21,6 @@ def create_person(person: PersonCreate, db: Session = Depends(get_db)) -> Person
 
     Args:
         person (PersonCreate): person to create
-        db (Session): local database session
 
     Returns:
         Person: newly created person
@@ -34,8 +32,7 @@ def create_person(person: PersonCreate, db: Session = Depends(get_db)) -> Person
         )
     if len(person.name) > 50:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Person name is too long!"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Person name is too long!"
         )
 
     db_person = person_service.get_person_by_name(name=person.name, db=db)
@@ -52,9 +49,6 @@ def create_person(person: PersonCreate, db: Session = Depends(get_db)) -> Person
 def get_all_persons(db: Session = Depends(get_db)) -> list[Person]:
     """GET endpoint to get all persons
 
-    Args:
-        db (Session): local database session
-
     Returns:
         list[Person]: a list of all persons
     """
@@ -67,7 +61,6 @@ def get_person_by_id(*, db: Session = Depends(get_db), person_id: int) -> Person
     """GET endpoint to get person by id
 
     Args:
-        db (Session): local database session
         person_id (int): id of person
 
     Returns:
@@ -94,7 +87,6 @@ def update_person_by_id(
     Args:
         person_id (int): id of person
         person_update (PersonBase): PersonBase for update
-        db (Session): local database session
 
     Returns:
         Person: updated person
@@ -106,8 +98,7 @@ def update_person_by_id(
         )
     if len(person_update.name) > 50:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, 
-            detail="Person name is too long!"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Person name is too long!"
         )
 
     updated_person = person_service.update_person_by_id(
@@ -127,7 +118,6 @@ def delete_person_by_id(person_id: int, db: Session = Depends(get_db)):
 
     Args:
         person_id (int): id of person to delete
-        db (Session): local database session
 
     Returns:
         Dict: message that person is deleted
@@ -135,8 +125,7 @@ def delete_person_by_id(person_id: int, db: Session = Depends(get_db)):
     delete_success = person_service.delete_person_by_id(person_id=person_id, db=db)
     if not delete_success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="Person not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Person not found"
         )
 
 
@@ -154,7 +143,6 @@ def create_task(
 
     Args:
         task (TaskCreate): task to create
-        db (Session): local database session
         person_id (int): id of the assigned person
 
     Returns:
@@ -212,9 +200,6 @@ def create_task(
 def get_all_tasks(db: Session = Depends(get_db)):
     """GET endpoint to get all tasks
 
-    Args:
-        db (Session): local database session
-
     Returns:
         list[Person]: a list of all tasks
     """
@@ -230,7 +215,6 @@ def get_task_by_id(
     """GET endpoint to get task by id
 
     Args:
-        db (Session): local database session
         task_id (int): id of task
 
     Returns:
@@ -257,7 +241,6 @@ def update_task_by_id(
     Args:
         task_id (int): id of task
         task_update (TaskBase): TaskBase for update
-        db (Session): local database session
 
     Returns:
         Task: updated task
@@ -320,11 +303,9 @@ def delete_task_by_id(task_id: int, db: Session = Depends(get_db)):
 
     Args:
         task_id (int): id of task to delete
-        db (Session): local database session
     """
     delete_success = task_service.delete_task_by_id(db=db, task_id=task_id)
     if not delete_success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, 
-            detail="Task not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
         )

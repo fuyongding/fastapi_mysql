@@ -25,7 +25,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 
 def get_db():
-    """gets a local session of database, 
+    """gets a local session of database,
     and close db after completing operation
 
     Yields:

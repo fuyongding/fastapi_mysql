@@ -8,6 +8,3 @@
 **Swagger** : localhost:8000/docs
 
 **TODOS:**
-- Combine other files in app folder into one single folder (task_manager) **DONE**
-- combining crud.py and database.py, using DAO and DTO **DONE**
-- handling different config for diff environment??? (diff env variable)

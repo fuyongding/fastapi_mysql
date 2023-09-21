@@ -8,19 +8,6 @@ from task_manager.main import app
 from task_manager.db.database import get_db
 from task_manager.db.models import Base
 
-# Load environment variables from .env file
-load_dotenv()
-
-# Get testing environment variables
-DATABASE_USERNAME = os.getenv("DATABASE_USERNAME")
-DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
-DATABASE_HOST = os.getenv("DATABASE_HOST")
-TEST_DATABASE = os.getenv("TEST_DATABASE")
-TEST_DATABASE_URL = f"mysql+pymysql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{TEST_DATABASE}"
-
-test_engine = create_engine(TEST_DATABASE_URL)
-TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
-
 # constants
 PERSONS_ENDPOINT = "/persons"
 TASKS_ENDPOINT = "/tasks"
@@ -33,6 +20,19 @@ DESCRIPTION_ONE = "Description 1"
 DESCRIPTION_TWO = "Description 2"
 INITIAL_TASK_NAME = "initial task name"
 INITIAL_TASK_DESCRIPTION = "initial task description"
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get testing environment variables
+DATABASE_USERNAME = os.getenv("DATABASE_USERNAME")
+DATABASE_PASSWORD = os.getenv("DATABASE_PASSWORD")
+DATABASE_HOST = os.getenv("DATABASE_HOST")
+TEST_DATABASE = os.getenv("TEST_DATABASE")
+TEST_DATABASE_URL = f"mysql+pymysql://{DATABASE_USERNAME}:{DATABASE_PASSWORD}@{DATABASE_HOST}/{TEST_DATABASE}"
+
+test_engine = create_engine(TEST_DATABASE_URL)
+TestSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
 
 
 def override_get_db():
