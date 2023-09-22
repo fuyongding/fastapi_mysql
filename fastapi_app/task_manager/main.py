@@ -25,23 +25,6 @@ def create_person(person: PersonCreate, db: Session = Depends(get_db)) -> Person
     Returns:
         Person: newly created person
     """
-    if not person.name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Person name cannot be empty!",
-        )
-    if len(person.name) > 50:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Person name is too long!"
-        )
-
-    db_person = person_service.get_person_by_name(name=person.name, db=db)
-    if db_person:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Person with this name already registered",
-        )
-
     return person_service.create_new_person(person=person, db=db)
 
 
@@ -52,8 +35,7 @@ def get_all_persons(db: Session = Depends(get_db)) -> list[Person]:
     Returns:
         list[Person]: a list of all persons
     """
-    response = person_service.get_all_persons(db=db)
-    return response
+    return person_service.get_all_persons(db=db)
 
 
 @app.get("/persons/{person_id}", response_model=Person)
@@ -66,13 +48,7 @@ def get_person_by_id(*, db: Session = Depends(get_db), person_id: int) -> Person
     Returns:
         Person: person with the id specified
     """
-    db_person = person_service.get_person_by_id(person_id=person_id, db=db)
-    if not db_person:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Person with this id does not exist",
-        )
-    return db_person
+    return person_service.get_person_by_id(person_id=person_id, db=db)
 
 
 @app.put("/persons/{person_id}", response_model=Person)
@@ -91,25 +67,9 @@ def update_person_by_id(
     Returns:
         Person: updated person
     """
-    if not person_update.name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Person name cannot be empty!",
-        )
-    if len(person_update.name) > 50:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Person name is too long!"
-        )
-
-    updated_person = person_service.update_person_by_id(
+    return person_service.update_person_by_id(
         person_id=person_id, person_update=person_update, db=db
     )
-    if updated_person is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Person with this id does not exist",
-        )
-    return updated_person
 
 
 @app.delete("/persons/{person_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -122,11 +82,7 @@ def delete_person_by_id(person_id: int, db: Session = Depends(get_db)):
     Returns:
         Dict: message that person is deleted
     """
-    delete_success = person_service.delete_person_by_id(person_id=person_id, db=db)
-    if not delete_success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Person not found"
-        )
+    return person_service.delete_person_by_id(person_id=person_id, db=db)
 
 
 # ------------------------------------------------------------------------------------------
@@ -148,51 +104,6 @@ def create_task(
     Returns:
         Task: newly created task
     """
-    if not task.name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Task name cannot be empty!"
-        )
-    if len(task.name) > 50:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Task name is too long!"
-        )
-    if not task.startdate:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Task start date cannot be null!",
-        )
-    if len(task.description) > 100:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Task description is too long!",
-        )
-    if (task.completed and not task.enddate) or (task.enddate and not task.completed):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="enddate and completed values are invalid!",
-        )
-    db_person = person_service.get_person_by_id(db=db, person_id=person_id)
-    if not db_person:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="no person with the id specified",
-        )
-
-    try:
-        start_date = datetime.strptime(str(task.startdate), "%Y-%m-%d")
-        if task.enddate:
-            end_date = datetime.strptime(str(task.enddate), "%Y-%m-%d")
-            if start_date > end_date:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="End date must be later than start date",
-                )
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Invalid date format. Use YYYY-MM-DD format for dates.",
-        )
-
     return task_service.create_new_task(db=db, task=task, person_id=person_id)
 
 
@@ -220,13 +131,7 @@ def get_task_by_id(
     Returns:
         Task: task with the id specified
     """
-    db_task = task_service.get_task_by_id(db=db, task_id=task_id)
-    if not db_task:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task with this id does not exist",
-        )
-    return db_task
+    return task_service.get_task_by_id(db=db, task_id=task_id)
 
 
 @app.put("/tasks/{task_id}", response_model=Task)
@@ -245,56 +150,9 @@ def update_task_by_id(
     Returns:
         Task: updated task
     """
-    if not task_update.name:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Task name cannot be empty!"
-        )
-    if len(task_update.name) > 50:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Task name is too long!"
-        )
-    if not task_update.startdate:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Task start date cannot be null!",
-        )
-    if len(task_update.description) > 100:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Task description is too long!",
-        )
-    if (task_update.completed and not task_update.enddate) or (
-        task_update.enddate and not task_update.completed
-    ):
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="enddate and completed values are invalid!",
-        )
-
-    try:
-        start_date = datetime.strptime(str(task_update.startdate), "%Y-%m-%d")
-        if task_update.enddate:
-            end_date = datetime.strptime(str(task_update.enddate), "%Y-%m-%d")
-            if start_date > end_date:
-                raise HTTPException(
-                    status_code=status.HTTP_400_BAD_REQUEST,
-                    detail="End date must be later than start date",
-                )
-    except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Invalid date format. Use YYYY-MM-DD format for dates.",
-        )
-
-    updated_task = task_service.update_task_by_id(
+    return task_service.update_task_by_id(
         db=db, task_id=task_id, task_update=task_update
     )
-    if updated_task is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Task with this id does not exist",
-        )
-    return updated_task
 
 
 @app.delete("/tasks/{task_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -304,8 +162,4 @@ def delete_task_by_id(task_id: int, db: Session = Depends(get_db)):
     Args:
         task_id (int): id of task to delete
     """
-    delete_success = task_service.delete_task_by_id(db=db, task_id=task_id)
-    if not delete_success:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
-        )
+    return task_service.delete_task_by_id(db=db, task_id=task_id)

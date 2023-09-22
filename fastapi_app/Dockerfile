@@ -12,10 +12,11 @@ RUN python3 -m venv $VIRTUAL_ENV
 ENV PATH="$VIRTUAL_ENV/bin:$PATH" 
 
 # Copy only the requirements file first
-COPY requirements.txt /app/
+COPY requirements.txt /app/ 
 
 # Install dependencies only if requirements.txt has changed
-RUN pip install -r requirements.txt
+# requirements.txt changes less frequently so can put this command first
+RUN pip install -r requirements.txt 
 
 # Copy the current directory contents into the container at /app
 COPY . /app
