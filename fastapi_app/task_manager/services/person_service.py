@@ -5,13 +5,14 @@ from fastapi import HTTPException, status
 from ..schemas.persons import PersonCreate, PersonBase
 from ..daos.person_dao import PersonDAO, person_dao
 from ..db.models import Person
+from ..rabbitmq.rabbitmq_service import RabbitMQService
 
 
 class PersonService:
     def __init__(self):
-        # instantiate here or instanstiate at other file
-        # self.person_dao = person_dao_param
         self.person_dao = PersonDAO()
+        self.rabbitmq_service = RabbitMQService('rabbitmq3')
+        self.rabbitmq_service.connect()
 
     def create_new_person(self, person: PersonCreate, db: Session) -> Optional[Person]:
         if not person.name:
@@ -37,6 +38,9 @@ class PersonService:
         if not db_person:
             return None
 
+        notificationMessage: str = f"PERSON CREATE: {db_person.name}"
+        self.rabbitmq_service.publish(message=notificationMessage)
+
         return db_person
 
     def get_person_by_name(self, name: str, db: Session) -> Optional[Person]:
@@ -57,6 +61,7 @@ class PersonService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Person with this id does not exist",
             )
+        
         return db_person
 
     def update_person_by_id(
@@ -82,6 +87,10 @@ class PersonService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Person with this id does not exist",
             )
+
+        notificationMessage: str = f"PERSON UPDATED: {updated_person.name}"
+        self.rabbitmq_service.publish(message=notificationMessage)
+
         return updated_person
 
     def delete_person_by_id(self, person_id: int, db: Session) -> bool:
@@ -90,8 +99,10 @@ class PersonService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Person not found"
             )
+        
+        notificationMessage: str = f"PERSON (ID: {person_id}) DELETED"
+        self.rabbitmq_service.publish(message=notificationMessage)
+
         return delete_success
 
-
-# instantiate person_service object here
 person_service: PersonService = PersonService()

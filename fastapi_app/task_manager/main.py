@@ -14,7 +14,6 @@ from .db.database import get_db
 
 app = FastAPI()
 
-
 @app.post("/persons", response_model=Person, status_code=status.HTTP_201_CREATED)
 def create_person(person: PersonCreate, db: Session = Depends(get_db)) -> Person:
     """POST endpoint for person
@@ -163,3 +162,9 @@ def delete_task_by_id(task_id: int, db: Session = Depends(get_db)):
         task_id (int): id of task to delete
     """
     return task_service.delete_task_by_id(db=db, task_id=task_id)
+
+# ------------------------------------------------------------------------------------------
+
+@app.on_event("shutdown")
+def shutdown_event():
+    rabbitmq_service.close()

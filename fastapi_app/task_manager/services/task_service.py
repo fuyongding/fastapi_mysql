@@ -6,12 +6,15 @@ from ..schemas.tasks import TaskCreate, TaskBase
 from ..daos.task_dao import TaskDAO, task_dao
 from ..db.models import Person, Task
 from ..services.person_service import person_service
+from ..rabbitmq.rabbitmq_service import RabbitMQService
 from datetime import datetime
 
 
 class TaskService:
     def __init__(self, task_dao_param: TaskDAO):
         self.task_dao = task_dao_param
+        self.rabbitmq_service = RabbitMQService('rabbitmq3')
+        self.rabbitmq_service.connect()
 
     def create_new_task(
         self, task: TaskCreate, person_id: int, db: Session
@@ -61,6 +64,9 @@ class TaskService:
 
         if not db_task:
             return None
+        
+        notificationMessage: str = f"TASK CREATE: {db_task.name}, PERSON ASSIGNED: {db_task.assigned_person}"
+        self.rabbitmq_service.publish(message=notificationMessage)
 
         return db_task
 
@@ -128,6 +134,10 @@ class TaskService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Task with this id does not exist",
             )
+        
+        notificationMessage: str = f"TASK UPDATED: {updated_task.name}, PERSON ASSIGNED: {updated_task.assigned_person}"
+        self.rabbitmq_service.publish(message=notificationMessage)
+
         return updated_task
     
     def delete_task_by_id(self, task_id: int, db: Session) -> bool:
@@ -136,6 +146,10 @@ class TaskService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND, detail="Task not found"
             )
+        
+        notificationMessage: str = f"TASK ID {task_id} DELETED"
+        self.rabbitmq_service.publish(message=notificationMessage)
+
         return delete_success
 
 

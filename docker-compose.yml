@@ -1,5 +1,36 @@
 version: '3'
 services:
+  rabbitmq3:
+      container_name: "rabbitmq"
+      build:
+        context: ./rabbitmq
+        dockerfile: Dockerfile
+      #environment:
+        # login details
+        #- RABBITMQ_DEFAULT_USER=${RABBITMQ_USERNAME}
+        #- RABBITMQ_DEFAULT_PASS=${RABBITMQ_PASSWORD}
+      ports:
+        - '5672:5672' # AMQP protocol port
+        - '15672:15672' # HTTP management UI
+      healthcheck:
+        test: ["CMD", "curl", "-f", "http://localhost:15672"]
+        interval: 30s
+        timeout: 10s
+        retries: 5
+      networks:
+        - backend
+  
+  consumer:
+      container_name: "consumer"
+      build:
+        context: ./consumer
+        dockerfile: Dockerfile
+      depends_on:
+        rabbitmq3:
+          condition: service_healthy
+      networks:
+        - backend
+
   fastapi:
     container_name: fastapi
     build:
@@ -10,6 +41,8 @@ services:
     depends_on:
       mysql-db:
         condition: service_healthy # this ensures fastapi only starts after mysql-db is done starting up
+      rabbitmq3:
+          condition: service_healthy
     volumes:
       - ./fastapi_app:/app
     env_file:
@@ -36,7 +69,35 @@ services:
       - "3306:3306"
     networks:
       - backend
-    
+
+volumes:
+  mysql-data:
+  mysql-logs:
+
+networks:
+   backend:
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   # sonarqube:
   #   image: sonarqube:lts-community
   #   container_name: sonarqube
@@ -44,10 +105,3 @@ services:
   #     - "9000:9000"
   #   networks:
   #     - backend
-
-volumes:
-  mysql-data:
-  mysql-logs:
- 
-networks:
-  backend:
